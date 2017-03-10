@@ -38,7 +38,14 @@ class JiraAPIWrapper {
      */
     static CustomField getCustomFieldByName(String cfName) {
         LOG.debug "Custom field name: ${cfName}"
-        getCustomFieldManager().getCustomFieldObjectByName(cfName)
+        // assumption here that field name is unique
+        def customFields = getCustomFieldManager().getCustomFieldObjectsByName(cfName)
+        if(customFields != null) {
+            customFields[0]
+        } else {
+            LOG.debug("No custom fields found with name: ${cfName}")
+            null
+        }
     }
 
     /**

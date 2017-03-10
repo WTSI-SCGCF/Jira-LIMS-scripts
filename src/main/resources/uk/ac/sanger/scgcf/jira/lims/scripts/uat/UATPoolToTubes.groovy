@@ -51,10 +51,16 @@ void process( Issue curIssue ) {
     LOG.debug "source plate barcode = ${plateBarcode}"
 
     // send to UATFunction and return tube barcodes and details
-    String poolTubeBarcodes, poolTubeDetails
+	def start = System.currentTimeMillis()
+
+	String poolTubeBarcodes, poolTubeDetails
     (poolTubeBarcodes, poolTubeDetails) = UATFunctions.poolToTubes(plateBarcode)
 
-    LOG.debug "poolTubeBarcodes = ${poolTubeBarcodes}"
+	def now = System.currentTimeMillis()
+	def elapsedTime = now - start
+	LOG.debug "Elapsed time in pool to tubes: ${elapsedTime / 1000} seconds."
+
+	LOG.debug "poolTubeBarcodes = ${poolTubeBarcodes}"
     LOG.debug "poolTubeDetails = ${poolTubeDetails}"
 
     // set the barcodes custom field

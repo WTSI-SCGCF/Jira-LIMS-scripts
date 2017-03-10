@@ -51,8 +51,15 @@ void process(Issue curIssue) {
     LOG.debug "source plate barcode = ${plateBarcode}"
 
     // send to UATFunction and return plate barcodes and details
+    def start = System.currentTimeMillis()
+
     String stampPlateBarcode, stampPlateDetails
     (stampPlateBarcode, stampPlateDetails) = UATFunctions.stampPlate(plateBarcode)
+
+    def now = System.currentTimeMillis()
+    def elapsedTime = now - start
+    LOG.debug "Elapsed time in stamp combined plates: ${elapsedTime / 1000} seconds."
+
 
     // set the barcodes custom field
     JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_STAMP_PLT_BARCODE"), stampPlateBarcode)

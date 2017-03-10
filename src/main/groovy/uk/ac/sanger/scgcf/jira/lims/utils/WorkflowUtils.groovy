@@ -17,6 +17,9 @@ import com.atlassian.jira.workflow.WorkflowTransitionUtil
 import com.atlassian.jira.workflow.WorkflowTransitionUtilImpl
 import com.atlassian.jira.user.ApplicationUser
 import groovy.util.logging.Slf4j
+import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
+import uk.ac.sanger.scgcf.jira.lims.enums.IssueTypeName
+import uk.ac.sanger.scgcf.jira.lims.service_wrappers.JiraAPIWrapper
 
 /**
  * Utility class for getting Jira workflow related properties.
@@ -26,6 +29,105 @@ import groovy.util.logging.Slf4j
 
 @Slf4j(value = "LOG")
 class WorkflowUtils {
+
+    /**
+     * Link a list of plates to the specified grouping issue and transition them if appropriate.
+     *
+     * @param plateActionParams a <code>PlateActionParameterHolder</code> object holding all the parameters
+     * needed for adding a plate to the given grouping issue
+     */
+    public static void addPlatesToGivenGrouping(PlateActionParameterHolder plateActionParams) {
+        executePlateAction(
+            plateActionParams,
+            { Issue mutableIssue ->
+                createIssueLink(plateActionParams.currentIssue, mutableIssue, plateActionParams.linkTypeName)
+            },
+            { String plateIdString ->
+                "Attempting to link plate with ID ${plateIdString} to ${plateActionParams.currentWorkflowName} workflow with ID ${plateActionParams.currentIssue.id}".toString()
+            }
+        )
+    }
+
+    /**
+     * Remove the links between a list of plates and the specified grouping issue and transition them if appropriate.
+     *
+     * @param plateActionParams a <code>PlateActionParameterHolder</code> object holding all the parameters
+     * needed for removing a plate from the given grouping issue
+     */
+    public static void removePlatesFromGivenGrouping(PlateActionParameterHolder plateActionParams, List<String> fieldNamesToClear) {
+        executePlateAction(
+                plateActionParams,
+                { Issue mutableIssue ->
+                    removeIssueLink(plateActionParams.currentIssue, mutableIssue, plateActionParams.linkTypeName)
+                    if (fieldNamesToClear) {
+                        clearFieldsValue(fieldNamesToClear, mutableIssue)
+                    }
+                },
+                { String plateIdString ->
+                    "Removing link to plate with ID ${plateIdString} from ${plateActionParams.currentWorkflowName}".toString()
+                }
+        )
+    }
+
+    private static void executePlateAction(PlateActionParameterHolder plateActionParams, Closure actionToExecute,
+                                           Closure messageClosure) {
+
+        plateActionParams.plateIds.each { String plateIdString ->
+            Long plateIdLong = Long.parseLong(plateIdString)
+            LOG.debug((String)messageClosure(plateIdString))
+
+            MutableIssue mutableIssue = getMutableIssueForIssueId(plateIdLong)
+
+            if(mutableIssue != null) {
+                LOG.debug("Issue type = ${mutableIssue.getIssueType().getName()} and plate action issue type = ${plateActionParams.issueTypeName}")
+            } else {
+                LOG.debug("Issue null")
+            }
+
+            if(mutableIssue != null && mutableIssue.getIssueType().getName() == plateActionParams.issueTypeName) {
+
+                actionToExecute(mutableIssue)
+
+                String issueStatusName = mutableIssue.getStatus().getName()
+
+                if( plateActionParams.statusToTransitionMap.keySet().contains(issueStatusName))  {
+                    String transitionName = plateActionParams.statusToTransitionMap.get(issueStatusName)
+                    LOG.debug("Attempting to fetch action ID for workflow ${plateActionParams.plateWorkflowName} and transition name $transitionName")
+                    int actionId = ConfigReader.getTransitionActionId(plateActionParams.plateWorkflowName, transitionName)
+                    LOG.debug("Action ID = ${actionId}")
+
+                    transitionIssue(mutableIssue, actionId)
+                }
+            }
+        }
+    }
+
+    /**
+     * Link a list of reagents to the specified issue.
+     *
+     * @param arrayReagentIds the list of reagent issue ids
+     * @param lbrIssue the issue to link the reagent to
+     */
+    public static void linkReagentsToGivenIssue(String[] arrayReagentIds, Issue lbrIssue, String issueTypeName) {
+        arrayReagentIds.each { String reagentIdString ->
+            Long reagentIdLong = Long.parseLong(reagentIdString)
+            LOG.debug "Attempting to link reagent with ID $reagentIdString to $issueTypeName with ID ${lbrIssue.id}".toString()
+            MutableIssue reagentMutableIssue = WorkflowUtils.getMutableIssueForIssueId(reagentIdLong)
+
+            if(reagentMutableIssue != null && reagentMutableIssue.getIssueType().getName() == IssueTypeName.REAGENT_LOT_OR_BATCH.toString()) {
+                LOG.debug "Calling link function in WorkflowUtils to link reagent to $issueTypeName".toString()
+                try {
+                    createIssueLink(lbrIssue, reagentMutableIssue, 'Uses Reagent')
+                    LOG.debug "Successfully linked reagent with ID $reagentIdString to $issueTypeName with ID ${lbrIssue.id}".toString()
+                } catch (Exception e) {
+                    LOG.error "Failed to link reagent with ID $reagentIdString to $issueTypeName with ID ${lbrIssue.id}".toString()
+                    LOG.error e.message
+                }
+            } else {
+                LOG.error "Reagent issue null or unexpected issue type when linking reagent with ID ${reagentIdString} to $issueTypeName with ID ${lbrIssue.id}".toString()
+            }
+        }
+    }
 
     /**
      * Gets the transition name by the given {@Issue} and actionID of the bounded transition variables.
@@ -189,5 +291,11 @@ class WorkflowUtils {
         MutableIssue mutableIssue = issMngr.getIssueObject(issueId)
 
         mutableIssue
+    }
+
+    private static void clearFieldsValue(List<String> fieldNamesToClear, Issue issue) {
+        fieldNamesToClear.each { fieldName ->
+            JiraAPIWrapper.setCustomFieldValueByName(issue, fieldName, null)
+        }
     }
 }

@@ -61,8 +61,14 @@ void process( Issue curIssue ) {
     }
 
     // send to UATFunction and return tube barcodes and details
+    def start = System.currentTimeMillis()
+
     String normTubeBarcodes, normTubeDetails
     (normTubeBarcodes, normTubeDetails) = UATFunctions.stampTubes(tubeBarcodesList)
+
+    def now = System.currentTimeMillis()
+    def elapsedTime = now - start
+    LOG.debug "Elapsed time in stamp tubes: ${elapsedTime / 1000} seconds."
 
     LOG.debug "normTubeBarcodes = ${normTubeBarcodes}"
     LOG.debug "normTubeDetails = ${normTubeDetails}"

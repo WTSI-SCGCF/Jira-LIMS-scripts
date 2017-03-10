@@ -1,4 +1,4 @@
-package uk.ac.sanger.scgcf.jira.lims.scripts.post_functions
+package uk.ac.sanger.scgcf.jira.lims.scripts.post_functions.samplereceipt
 
 import com.atlassian.jira.issue.Issue
 import org.slf4j.Logger

@@ -47,10 +47,16 @@ void process( Issue curIssue ) {
     LOG.debug "UAT Processing: Create Customer Tubes"
 
     // create the tubes and materials and return the barcodes and some details
-    String tubeBarcodes, tubeDetails
+	def start = System.currentTimeMillis()
+
+	String tubeBarcodes, tubeDetails
     (tubeBarcodes, tubeDetails) = UATFunctions.createCustomerTubes()
 
-    // set the barcodes custom field
+	def now = System.currentTimeMillis()
+	def elapsedTime = now - start
+	LOG.debug "Elapsed time in create customer tubes: ${elapsedTime / 1000} seconds."
+
+	// set the barcodes custom field
     JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_CUST_TUBE_BARCODES"), tubeBarcodes)
 
     // set the details custom field

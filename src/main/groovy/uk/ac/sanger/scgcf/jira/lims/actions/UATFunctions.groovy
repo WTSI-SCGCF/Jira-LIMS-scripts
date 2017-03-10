@@ -329,8 +329,8 @@ class UATFunctions {
                     String curMatId = curPlate.receptacles[wellIndx].materialUuid
                     String curLocnName = curPlate.receptacles[wellIndx].location.name
                     Material curMat = Material.getMaterials([curMatId])[0]
-                    String parMatId = curMat.parents[0].id
-                    LOG.debug("${curLocnName} Id = ${curMat.getName()} Parent = ${curMatId},${parMatId}\n")
+//                    String parMatId = curMat.parents[0].id
+//                    LOG.debug("${curLocnName} Id = ${curMat.getName()} Parent = ${curMatId},${parMatId}\n")
                 }
                 append("\n")
             }

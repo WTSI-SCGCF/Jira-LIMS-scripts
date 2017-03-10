@@ -65,10 +65,16 @@ void process( Issue curIssue ) {
     }
 
     // send to UATFunction and return tube barcodes and details
-    String reportDetails
+	def start = System.currentTimeMillis()
+
+	String reportDetails
     reportDetails = UATFunctions.reportOnTubes(tubeBarcodesList)
 
-    // set the details custom field
+	def now = System.currentTimeMillis()
+	def elapsedTime = now - start
+	LOG.debug "Elapsed time in creating report on tubes: ${elapsedTime / 1000} seconds."
+
+	// set the details custom field
     String repString = "Check attachment for report details"
     JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_REPORT_DETAILS"), repString)
 
@@ -98,7 +104,7 @@ void process( Issue curIssue ) {
         if (writer != null) writer.close()
     }
 
-    def now = new Date()
+    now = new Date()
     String fileName = "report_${now.format("yyyyMMdd_HHmmss")}.txt"
     LOG.debug "fileName : ${fileName}"
 

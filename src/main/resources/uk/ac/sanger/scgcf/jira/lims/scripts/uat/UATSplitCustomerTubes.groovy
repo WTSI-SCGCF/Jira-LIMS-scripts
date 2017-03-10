@@ -63,10 +63,16 @@ void process( Issue curIssue ) {
     }
 
     // send to UATFunction and return plate barcodes and details
+    def start = System.currentTimeMillis()
+
     String splitPlateBarcodes, splitPlateDetails
     (splitPlateBarcodes, splitPlateDetails) = UATFunctions.splitCustTubes(tubeBarcodesList)
 
-    // set the barcodes custom field
+     def now = System.currentTimeMillis()
+    def elapsedTime = now - start
+    LOG.debug "Elapsed time in split customer tubes: ${elapsedTime / 1000} seconds."
+
+   // set the barcodes custom field
     JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_SPLIT_PLT_BARCODES"), splitPlateBarcodes)
 
     // set the details custom field

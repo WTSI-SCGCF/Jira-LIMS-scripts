@@ -61,8 +61,14 @@ void process( Issue curIssue ) {
     }
 
     // send to UATFunction and return plate barcodes and details
-    String combinePlateBarcode, combinePlateDetails
+	def start = System.currentTimeMillis()
+
+	String combinePlateBarcode, combinePlateDetails
     (combinePlateBarcode, combinePlateDetails) = UATFunctions.combineSortedPlates(plateBarcodesList)
+
+	def now = System.currentTimeMillis()
+	def elapsedTime = now - start
+	LOG.debug "Elapsed time in combine sorted plates: ${elapsedTime / 1000} seconds."
 
     // set the barcodes custom field
     JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_CMB_PLT_BARCODE"), combinePlateBarcode)
