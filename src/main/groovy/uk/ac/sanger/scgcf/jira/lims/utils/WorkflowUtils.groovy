@@ -106,25 +106,25 @@ class WorkflowUtils {
      * Link a list of reagents to the specified issue.
      *
      * @param arrayReagentIds the list of reagent issue ids
-     * @param lbrIssue the issue to link the reagent to
+     * @param curIssue the issue to link the reagent to
      */
-    public static void linkReagentsToGivenIssue(String[] arrayReagentIds, Issue lbrIssue, String issueTypeName) {
+    public static void linkReagentsToGivenIssue(String[] arrayReagentIds, Issue curIssue) {
         arrayReagentIds.each { String reagentIdString ->
             Long reagentIdLong = Long.parseLong(reagentIdString)
-            LOG.debug "Attempting to link reagent with ID $reagentIdString to $issueTypeName with ID ${lbrIssue.id}".toString()
-            MutableIssue reagentMutableIssue = WorkflowUtils.getMutableIssueForIssueId(reagentIdLong)
+            LOG.debug "Attempting to link reagent with ID $reagentIdString to issue with ID ${curIssue.id}".toString()
+            MutableIssue reagentMutableIssue = getMutableIssueForIssueId(reagentIdLong)
 
             if(reagentMutableIssue != null && reagentMutableIssue.getIssueType().getName() == IssueTypeName.REAGENT_LOT_OR_BATCH.toString()) {
-                LOG.debug "Calling link function in WorkflowUtils to link reagent to $issueTypeName".toString()
+                LOG.debug "Calling link function in WorkflowUtils to link reagent to issue with ID ${curIssue.id}".toString()
                 try {
-                    createIssueLink(lbrIssue, reagentMutableIssue, 'Uses Reagent')
-                    LOG.debug "Successfully linked reagent with ID $reagentIdString to $issueTypeName with ID ${lbrIssue.id}".toString()
+                    createIssueLink(curIssue, reagentMutableIssue, 'Uses Reagent')
+                    LOG.debug "Successfully linked reagent with ID $reagentIdString to issue with ID ${curIssue.id}".toString()
                 } catch (Exception e) {
-                    LOG.error "Failed to link reagent with ID $reagentIdString to $issueTypeName with ID ${lbrIssue.id}".toString()
+                    LOG.error "Failed to link reagent with ID $reagentIdString to issue with ID ${curIssue.id}".toString()
                     LOG.error e.message
                 }
             } else {
-                LOG.error "Reagent issue null or unexpected issue type when linking reagent with ID ${reagentIdString} to $issueTypeName with ID ${lbrIssue.id}".toString()
+                LOG.error "Reagent issue null or unexpected issue type when linking reagent with ID ${reagentIdString} to issue with ID ${curIssue.id}".toString()
             }
         }
     }

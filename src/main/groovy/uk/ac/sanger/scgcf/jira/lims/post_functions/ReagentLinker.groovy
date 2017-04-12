@@ -17,24 +17,22 @@ import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
 class ReagentLinker {
 
     Issue curIssue
-    String issueTypeName
     String customFieldName
 
-    public ReagentLinker(Issue curIssue, String issueTypeName, String customFieldName) {
+    public ReagentLinker(Issue curIssue, String customFieldName) {
         this.curIssue = curIssue
-        this.issueTypeName = issueTypeName
         this.customFieldName = customFieldName
     }
 
     public void execute() {
-        if (!(curIssue != null && issueTypeName != null && customFieldName != null)) {
+        if (!(curIssue != null && customFieldName != null)) {
             InvalidInputException invalidInputException =
                     new InvalidInputException("The passed arguments are invalid."
-                            + "[curIssue: $curIssue, issueTypeName: $issueTypeName, customFieldName: $customFieldName]")
+                            + "[curIssue: $curIssue, customFieldName: $customFieldName]")
             ValidatorExceptionHandler.throwAndLog(invalidInputException, invalidInputException.message, null)
         }
 
-        LOG.debug "Post-function for adding reagents to a $issueTypeName".toString()
+        LOG.debug "Post-function for adding reagents to issue with id ${curIssue.id}".toString()
 
         // fetch the array of selected reagents from the nFeed custom field
         def customFieldManager = ComponentAccessor.getCustomFieldManager()
@@ -51,10 +49,10 @@ class ReagentLinker {
             }
 
             // link and transition the plate issue(s)
-            WorkflowUtils.linkReagentsToGivenIssue(arrayReagentIds, curIssue, issueTypeName)
+            WorkflowUtils.linkReagentsToGivenIssue(arrayReagentIds, curIssue)
 
         } else {
-            LOG.error("Failed to get the reagent list custom field for adding reagents to $issueTypeName".toString())
+            LOG.error("Failed to get the reagent list custom field for adding reagents to issue with id ${curIssue.id}".toString())
         }
     }
 }

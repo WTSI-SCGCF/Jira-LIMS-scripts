@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>jira_lims_scripts</groupId>
     <artifactId>jira_lims_scripts</artifactId>
-    <version>1.14.0</version>
+    <version>1.15.0</version>
 
     <!-- To output to plugin format use atlassian-plugin packaging -->
     <packaging>atlassian-plugin</packaging>
