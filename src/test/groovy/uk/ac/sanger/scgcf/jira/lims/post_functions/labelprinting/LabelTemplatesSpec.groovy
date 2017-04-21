@@ -13,7 +13,7 @@ class LabelTemplatesSpec extends Specification {
     def "Instantiating a label template can create a proper type of label json creator"() {
 
         setup:
-        LabelTemplates ss2LysisBufferTemplate = LabelTemplates.SS2_LYSIS_BUFFER
+        LabelTemplates ss2LysisBufferTemplate = LabelTemplates.LABEL_STANDARD_6MM_PLATE
         def labelData = [:]
         labelData['barcodes'] = ["ABCD-EFG-00000001"]
         Object[] args = [labelData]
@@ -26,7 +26,7 @@ class LabelTemplatesSpec extends Specification {
     def "Instantiating a label template can return its proper type as a String"() {
 
         setup:
-        LabelTemplates ss2LysisBufferTemplate = LabelTemplates.SS2_LYSIS_BUFFER
+        LabelTemplates ss2LysisBufferTemplate = LabelTemplates.LABEL_STANDARD_6MM_PLATE
         String expectedType = "SS2 Lysis Buffer"
 
         expect:

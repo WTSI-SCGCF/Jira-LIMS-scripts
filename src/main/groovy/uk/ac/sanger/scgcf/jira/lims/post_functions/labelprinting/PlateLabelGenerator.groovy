@@ -78,7 +78,7 @@ class PlateLabelGenerator {
     }
 
     private initBarcodeProperties() {
-        Map<String, String> labelTemplateDetails = (Map<String, String>) ConfigReader.getLabeltemplateDetails(LabelTemplates.SS2_LYSIS_BUFFER)
+        Map<String, String> labelTemplateDetails = (Map<String, String>) ConfigReader.getLabeltemplateDetails(LabelTemplates.LABEL_STANDARD_6MM_PLATE)
 
         def labelTemplateId = labelTemplateDetails.id
 
@@ -99,7 +99,7 @@ class PlateLabelGenerator {
         barcodeInfo = labelTemplateDetails["barcodeInfo"]
 
         plateLabelJsonCreators = new HashMap<>()
-        plateLabelJsonCreators.put(LabelTemplates.SS2_LYSIS_BUFFER.type, LabelTemplates.SS2_LYSIS_BUFFER)
+        plateLabelJsonCreators.put(LabelTemplates.LABEL_STANDARD_6MM_PLATE.type, LabelTemplates.LABEL_STANDARD_6MM_PLATE)
     }
 
 

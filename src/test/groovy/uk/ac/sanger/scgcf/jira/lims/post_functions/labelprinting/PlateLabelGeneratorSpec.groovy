@@ -28,7 +28,7 @@ class PlateLabelGeneratorSpec extends Specification {
         setup:
         String printerName = "abcd123"
         int numberOfLabels = 1
-        LabelTemplates labelTemplate = LabelTemplates.SS2_LYSIS_BUFFER
+        LabelTemplates labelTemplate = LabelTemplates.LABEL_STANDARD_6MM_PLATE
         def labelData = [:]
         def prefix = "ABCD"
         def info = "EFG"
@@ -87,7 +87,7 @@ class PlateLabelGeneratorSpec extends Specification {
         setup:
         String printerName = "abcd123"
         int numberOfLabels = 4
-        LabelTemplates labelTemplate = LabelTemplates.SS2_LYSIS_BUFFER
+        LabelTemplates labelTemplate = LabelTemplates.LABEL_STANDARD_6MM_PLATE
         def labelData = [:]
         def prefix = "ABCD"
         def info = "EFG"

@@ -23,7 +23,8 @@ LOG.debug "Printing plate's barcode label(s)"
 
 String printerName = JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("PRINTER_FOR_PLATE_LABELS"))
 int numberOfLabels = Double.valueOf(JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("NUMBER_OF_PLATES"))).intValue()
-def labelTemplate = LabelTemplates.SS2_LYSIS_BUFFER
+//TODO: add checks for null pointer exceptions in number of plates and set numberoflabels to 1
+def labelTemplate = LabelTemplates.LABEL_STANDARD_6MM_PLATE
 def labelData = [:]
 
 PrintLabelAction printLabelAction =

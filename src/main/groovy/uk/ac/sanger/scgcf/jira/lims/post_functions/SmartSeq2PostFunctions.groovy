@@ -1,6 +1,5 @@
 package uk.ac.sanger.scgcf.jira.lims.post_functions
 
-import com.atlassian.jira.issue.Issue
 import com.atlassian.jira.issue.MutableIssue
 import groovy.util.logging.Slf4j
 import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader

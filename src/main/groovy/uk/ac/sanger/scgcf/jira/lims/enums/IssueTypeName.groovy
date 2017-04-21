@@ -8,6 +8,8 @@ package uk.ac.sanger.scgcf.jira.lims.enums
 enum IssueTypeName {
 
     PLATE_SS2("Plate SS2"),
+    PLATE_DNA("Plate DNA"),
+    PLATE_CMB("Plate CMB"),
     REAGENT_LOT_OR_BATCH("Reagent Lot or Batch"),
     SUBMISSION("Submission"),
     SMARTSEQ2("Smart-seq2")

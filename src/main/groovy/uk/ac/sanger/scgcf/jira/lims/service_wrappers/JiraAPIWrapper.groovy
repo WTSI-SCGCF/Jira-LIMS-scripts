@@ -53,7 +53,8 @@ class JiraAPIWrapper {
      * @param curIssue
      * @param cfName
      * @return String value of custom field
-     * TODO: this needs to handle custom fields other than strings
+     * TODO: split out to handle custom fields other than simple strings
+     * TODO: handle various exceptions and fail silently
      */
     static String getCustomFieldValueByName(Issue curIssue, String cfName) {
         LOG.debug "Custom field name: ${cfName}"
@@ -61,6 +62,56 @@ class JiraAPIWrapper {
         LOG.debug("CF value: ${cfValue}")
         cfValue
     }
+
+//    /**
+//     * Useful method for retrieving multi-select custom field value as List<String>
+//     */
+//    @Nonnull
+//    public List<String> getMultiSelectFieldValue(@Nonnull String fieldName, @Nonnull Issue issue) {
+//        Validate.notNull(fieldName);
+//        Validate.notNull(issue);
+//        final CustomField customField = getCustomFieldByName(fieldName);
+//
+//        // Let's use the Option interface here as well instead of a specific implementation
+//        @SuppressWarnings("unchecked")
+//        final List<Option> value = (List<Option>) issue.getCustomFieldValue(customField);
+//        // Handle NullPointerException
+//        if (value == null) {
+//            LOG.debug(
+//                    "No value assigned to custom field '{}' on issue {}. Returning empty list.",
+//                    customField, issue.getKey()
+//            );
+////            return Lists.newArrayList();
+//            return new ArrayList<>()
+//        }
+//        // Handle non-list return values
+//        if (!(value instanceof List)) {
+//            LOG.debug(
+//                    "Value of custom field '{}' on issue {} was not a List. Returning empty list.",
+//                    customField, issue.getKey()
+//            );
+////            return Lists.newArrayList();
+//            return new ArrayList<>()
+//        }
+//        // If it's empty, lets just return a new empty string list and forget about the origin type
+//        if (value.isEmpty()) {
+////            return Lists.newArrayList();
+//            return new ArrayList<>()
+//        }
+//        // Handle potential ClassCastException for lists of any other kind, like Label
+//        if (!(value.get(0) instanceof Option)) {
+//            LOG.debug(
+//                    "Value of custom field '{}' on issue {} was not a List<Option>. Returning empty list.",
+//                    customField, issue.getKey()
+//            );
+////            return Lists.newArrayList();
+//            return new ArrayList<>()
+//        }
+//        // Java 8
+//        return value.stream()
+//                .map(Option::getValue)
+//                .collect(Collectors.toList());
+//    }
 
     /**
      * Set the value of a specified custom field for an issue

@@ -11,8 +11,8 @@ import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates.SS2Ly
  */
 enum LabelTemplates {
 
-    SS2_LYSIS_BUFFER("SS2 Lysis Buffer", SS2LysisBufferLabelJsonCreator.class),
-    LIBRARY_POOL_TUBE("Library Pool Tube", LibraryPoolTubeLabelJsonCreator.class)
+    LABEL_STANDARD_6MM_PLATE("SS2 Lysis Buffer", SS2LysisBufferLabelJsonCreator.class),
+    LABEL_STANDARD_TUBE("Library Pool Tube", LibraryPoolTubeLabelJsonCreator.class)
 
     private String type
     private Class<?> clazz
