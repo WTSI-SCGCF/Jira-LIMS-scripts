@@ -43,9 +43,9 @@ if(customField != null) {
 
     // link and transition the plate issue(s)
     SmartSeq2PostFunctions.transitionPlates(arrayPlateIds, WorkflowName.PLATE_SS2,
-            IssueTypeName.PLATE_SS2, IssueStatusName.PLATESS2_IN_SS2,
-            IssueStatusName.PLATESS2_IN_FEEDBACK, TransitionName.AWAITING_SS2_FEEDBACK)
+            IssueTypeName.PLATE_SS2, IssueStatusName.PLTSS2_IN_SS2,
+            IssueStatusName.PLTSS2_IN_FEEDBACK, TransitionName.SS2_AWAITING_SS2_FEEDBACK)
 
 } else {
-    LOG.error("Failed to get the plate array custom field for adding plates to a Submission")
+    LOG.error("Failed to get the plate array custom field for removing plates in Smart-seq2")
 }

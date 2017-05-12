@@ -28,16 +28,16 @@ class DependentFieldValidatorSpec extends Specification {
         def final parentFieldValue = "Other"
 
         GroovyMock(ConfigReader, global:true)
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[0]) >> mandatoryFieldNames[0]
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[1]) >> mandatoryFieldNames[1]
+        ConfigReader.getCFName(mandatoryFieldAliases[0]) >> mandatoryFieldNames[0]
+        ConfigReader.getCFName(mandatoryFieldAliases[1]) >> mandatoryFieldNames[1]
 
         GroovyMock(JiraAPIWrapper, global:true)
         JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[0]) >>
                 new MockCustomField(mockedCustomFieldIDs[0], mockedCustomFieldNames[0], mockCustomFieldType)
         JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[1]) >>
                 new MockCustomField(mockedCustomFieldIDs[1], mockedCustomFieldNames[1], mockCustomFieldType)
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[0]) >> parentFieldValue
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[1]) >> ""
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[0]) >> parentFieldValue
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[1]) >> ""
 
         def dependentFieldValidator = new DependentFieldValidator()
 
@@ -67,16 +67,16 @@ class DependentFieldValidatorSpec extends Specification {
         def final parentFieldValue = "Other"
 
         GroovyMock(ConfigReader, global:true)
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[0]) >> mandatoryFieldNames[0]
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[1]) >> mandatoryFieldNames[1]
+        ConfigReader.getCFName(mandatoryFieldAliases[0]) >> mandatoryFieldNames[0]
+        ConfigReader.getCFName(mandatoryFieldAliases[1]) >> mandatoryFieldNames[1]
 
         GroovyMock(JiraAPIWrapper, global:true)
         JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[0]) >>
                 new MockCustomField(mockedCustomFieldIDs[0], mockedCustomFieldNames[0], mockCustomFieldType)
         JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[1]) >>
                 new MockCustomField(mockedCustomFieldIDs[1], mockedCustomFieldNames[1], mockCustomFieldType)
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[0]) >> parentFieldValue
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[1]) >> "alien"
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[0]) >> parentFieldValue
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[1]) >> "alien"
 
         def dependentFieldValidator = new DependentFieldValidator()
 

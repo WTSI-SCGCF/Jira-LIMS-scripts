@@ -1,10 +1,8 @@
 package uk.ac.sanger.scgcf.jira.lims.post_functions
 
-import com.atlassian.jira.component.ComponentAccessor
 import com.atlassian.jira.issue.Issue
 import com.opensymphony.workflow.InvalidInputException
 import groovy.util.logging.Slf4j
-import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
 import uk.ac.sanger.scgcf.jira.lims.utils.ValidatorExceptionHandler
 import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
 
@@ -17,42 +15,28 @@ import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
 class ReagentLinker {
 
     Issue curIssue
-    String customFieldName
+    String cfAlias
 
-    public ReagentLinker(Issue curIssue, String customFieldName) {
+    public ReagentLinker(Issue curIssue, String cfAlias) {
         this.curIssue = curIssue
-        this.customFieldName = customFieldName
+        this.cfAlias = cfAlias
     }
 
     public void execute() {
-        if (!(curIssue != null && customFieldName != null)) {
+        if (!(curIssue != null && cfAlias != null)) {
             InvalidInputException invalidInputException =
                     new InvalidInputException("The passed arguments are invalid."
-                            + "[curIssue: $curIssue, customFieldName: $customFieldName]")
+                            + "[curIssue: $curIssue, customFieldName: $cfAlias]")
             ValidatorExceptionHandler.throwAndLog(invalidInputException, invalidInputException.message, null)
         }
 
         LOG.debug "Post-function for adding reagents to issue with id ${curIssue.id}".toString()
 
-        // fetch the array of selected reagents from the nFeed custom field
-        def customFieldManager = ComponentAccessor.getCustomFieldManager()
-        def customField = customFieldManager.getCustomFieldObject(ConfigReader.getCFId(customFieldName))
+        ArrayList<String> ids = WorkflowUtils.getIssueIdsFromNFeedField(curIssue, cfAlias)
 
-        if(customField != null) {
-            // the value of the nFeed field is a list of long issue ids for the selected reagents
-            String[] arrayReagentIds = curIssue.getCustomFieldValue(customField)
-
-            // if user hasn't selected anything do nothing further
-            if (arrayReagentIds == null) {
-                LOG.debug("No reagents selected, nothing to do")
-                return
-            }
-
-            // link and transition the plate issue(s)
-            WorkflowUtils.linkReagentsToGivenIssue(arrayReagentIds, curIssue)
-
-        } else {
-            LOG.error("Failed to get the reagent list custom field for adding reagents to issue with id ${curIssue.id}".toString())
+        // link and transition the plate issue(s)
+        if(ids != null) {
+            WorkflowUtils.linkReagentsToGivenIssue(ids, curIssue)
         }
     }
 }

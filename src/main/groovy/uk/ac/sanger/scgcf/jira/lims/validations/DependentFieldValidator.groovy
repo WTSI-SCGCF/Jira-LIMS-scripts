@@ -39,13 +39,13 @@ class DependentFieldValidator {
 
         def invalidInputException
 
-        String parentFieldName = ConfigReader.getCustomFieldName(parentFieldAlias)
-        String dependentFieldName = ConfigReader.getCustomFieldName(dependentFieldAlias)
+        String parentFieldName = ConfigReader.getCFName(parentFieldAlias)
+        String dependentFieldName = ConfigReader.getCFName(dependentFieldAlias)
 
-        Object parentFieldActualValue = JiraAPIWrapper.getCustomFieldValueByName(issue, parentFieldName)
+        Object parentFieldActualValue = JiraAPIWrapper.getCFValueByName(issue, parentFieldName)
 
         if ( parentFieldActualValue.equals(parentFieldValue)) {
-            Object dependentFieldValue = JiraAPIWrapper.getCustomFieldValueByName(issue, dependentFieldName)
+            Object dependentFieldValue = JiraAPIWrapper.getCFValueByName(issue, dependentFieldName)
             CustomField dependentFieldToValidate = JiraAPIWrapper.getCustomFieldByName(dependentFieldName)
 
             LOG.debug "Validating $dependentFieldName field's value. Its value: '$dependentFieldValue'"

@@ -37,9 +37,9 @@ class MandatoryFieldValidator {
         def invalidInputException
 
         fieldsToValidate.forEach {
-            String customFieldName = ConfigReader.getCustomFieldName(it)
+            String customFieldName = ConfigReader.getCFName(it)
             CustomField customfieldToValidate = JiraAPIWrapper.getCustomFieldByName(customFieldName)
-            String customFieldValue = JiraAPIWrapper.getCustomFieldValueByName(issue, customFieldName)
+            String customFieldValue = JiraAPIWrapper.getCFValueByName(issue, customFieldName)
             if (customFieldValue != null) customFieldValue = customFieldValue.trim()
 
             LOG.debug "Validating $it mandatory field. Its value: '$customFieldValue'"

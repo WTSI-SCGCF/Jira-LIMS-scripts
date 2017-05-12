@@ -37,9 +37,9 @@ class AtLeastOneFieldValidator {
         List<String> fieldNames = new ArrayList<>()
 
         for (String fieldNameAlias: fieldNameAliases) {
-            String customFieldName = ConfigReader.getCustomFieldName(fieldNameAlias)
+            String customFieldName = ConfigReader.getCFName(fieldNameAlias)
             CustomField customFieldToValidate = JiraAPIWrapper.getCustomFieldByName(customFieldName)
-            Object customFieldValue = JiraAPIWrapper.getCustomFieldValueByName(issue, customFieldName)
+            Object customFieldValue = JiraAPIWrapper.getCFValueByName(issue, customFieldName)
 
             LOG.debug "Validating $customFieldName field. Its value: '$customFieldValue'"
 

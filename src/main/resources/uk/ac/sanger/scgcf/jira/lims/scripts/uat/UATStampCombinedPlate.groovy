@@ -47,7 +47,7 @@ void process(Issue curIssue) {
     LOG.debug "UAT Processing: Stamp Combined Plate"
 
     // get the source plate barcodes
-    String plateBarcode = JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_CMB_PLT_BARCODE"))
+    String plateBarcode = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("UAT_CMB_PLT_BARCODE"))
     LOG.debug "source plate barcode = ${plateBarcode}"
 
     // send to UATFunction and return plate barcodes and details
@@ -62,8 +62,8 @@ void process(Issue curIssue) {
 
 
     // set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_STAMP_PLT_BARCODE"), stampPlateBarcode)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_STAMP_PLT_BARCODE"), stampPlateBarcode)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_STAMP_PLT_DETAILS"), stampPlateDetails)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_STAMP_PLT_DETAILS"), stampPlateDetails)
 }

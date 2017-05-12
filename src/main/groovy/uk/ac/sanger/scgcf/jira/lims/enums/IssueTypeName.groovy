@@ -10,9 +10,11 @@ enum IssueTypeName {
     PLATE_SS2("Plate SS2"),
     PLATE_DNA("Plate DNA"),
     PLATE_CMB("Plate CMB"),
+    PLATE_ECH("Plate ECH"),
     REAGENT_LOT_OR_BATCH("Reagent Lot or Batch"),
     SUBMISSION("Submission"),
-    SMARTSEQ2("Smart-seq2")
+    SMARTSEQ2("Smart-seq2"),
+    SPRI_PLATE_CLEANUP("SPRi Plate Cleanup")
 
     String issueTypeName
 

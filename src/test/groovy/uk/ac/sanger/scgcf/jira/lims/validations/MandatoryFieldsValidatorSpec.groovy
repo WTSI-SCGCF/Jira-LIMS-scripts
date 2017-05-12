@@ -27,9 +27,9 @@ class MandatoryFieldsValidatorSpec extends Specification {
         def mockCustomFieldType = new MockCustomFieldType()
 
         GroovyMock(ConfigReader, global:true)
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[0]) >> mandatoryFieldNames[0]
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[1]) >> mandatoryFieldNames[1]
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[2]) >> mandatoryFieldNames[2]
+        ConfigReader.getCFName(mandatoryFieldAliases[0]) >> mandatoryFieldNames[0]
+        ConfigReader.getCFName(mandatoryFieldAliases[1]) >> mandatoryFieldNames[1]
+        ConfigReader.getCFName(mandatoryFieldAliases[2]) >> mandatoryFieldNames[2]
 
         GroovyMock(JiraAPIWrapper, global:true)
         JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[0]) >>
@@ -38,9 +38,9 @@ class MandatoryFieldsValidatorSpec extends Specification {
                 new MockCustomField(mockedCustomFieldIDs[1], mockedCustomFieldNames[1], mockCustomFieldType)
         JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[2]) >>
                 new MockCustomField(mockedCustomFieldIDs[2], mockedCustomFieldNames[2], mockCustomFieldType)
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[0]) >> ""
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[1]) >> ""
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[2]) >> "someValue"
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[0]) >> ""
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[1]) >> ""
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[2]) >> "someValue"
 
         def mandatoryFieldValidator = new MandatoryFieldValidator()
 
@@ -69,9 +69,9 @@ class MandatoryFieldsValidatorSpec extends Specification {
         def mockCustomFieldType = new MockCustomFieldType()
 
         GroovyMock(ConfigReader, global:true)
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[0]) >> mandatoryFieldNames[0]
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[1]) >> mandatoryFieldNames[1]
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[2]) >> mandatoryFieldNames[2]
+        ConfigReader.getCFName(mandatoryFieldAliases[0]) >> mandatoryFieldNames[0]
+        ConfigReader.getCFName(mandatoryFieldAliases[1]) >> mandatoryFieldNames[1]
+        ConfigReader.getCFName(mandatoryFieldAliases[2]) >> mandatoryFieldNames[2]
 
         GroovyMock(JiraAPIWrapper, global:true)
         JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[0]) >>
@@ -80,9 +80,9 @@ class MandatoryFieldsValidatorSpec extends Specification {
                 new MockCustomField(mockedCustomFieldIDs[1], mockedCustomFieldNames[1], mockCustomFieldType)
         JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[2]) >>
                 new MockCustomField(mockedCustomFieldIDs[2], mockedCustomFieldNames[2], mockCustomFieldType)
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[0]) >> " "
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[1]) >> " \t "
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[2]) >> " someValue "
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[0]) >> " "
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[1]) >> " \t "
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[2]) >> " someValue "
 
         def mandatoryFieldValidator = new MandatoryFieldValidator()
 
@@ -111,9 +111,9 @@ class MandatoryFieldsValidatorSpec extends Specification {
         def mockCustomFieldType = new MockCustomFieldType()
 
         GroovyMock(ConfigReader, global:true)
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[0]) >> mandatoryFieldNames[0]
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[1]) >> mandatoryFieldNames[1]
-        ConfigReader.getCustomFieldName(mandatoryFieldAliases[2]) >> mandatoryFieldNames[2]
+        ConfigReader.getCFName(mandatoryFieldAliases[0]) >> mandatoryFieldNames[0]
+        ConfigReader.getCFName(mandatoryFieldAliases[1]) >> mandatoryFieldNames[1]
+        ConfigReader.getCFName(mandatoryFieldAliases[2]) >> mandatoryFieldNames[2]
 
         GroovyMock(JiraAPIWrapper, global:true)
         JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[0]) >>
@@ -122,9 +122,9 @@ class MandatoryFieldsValidatorSpec extends Specification {
                 new MockCustomField(mockedCustomFieldIDs[1], mockedCustomFieldNames[1], mockCustomFieldType)
         JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[2]) >>
                 new MockCustomField(mockedCustomFieldIDs[2], mockedCustomFieldNames[2], mockCustomFieldType)
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[0]) >> "some value1"
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[1]) >> "some value2"
-        JiraAPIWrapper.getCustomFieldValueByName(issueStub, mandatoryFieldNames[2]) >> "some value3"
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[0]) >> "some value1"
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[1]) >> "some value2"
+        JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[2]) >> "some value3"
 
         def mandatoryFieldValidator = new MandatoryFieldValidator()
 

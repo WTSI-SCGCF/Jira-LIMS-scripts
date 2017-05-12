@@ -47,7 +47,7 @@ void process( Issue curIssue ) {
     LOG.debug "UAT Processing: Stamp Tubes"
 
     // get the source barcodes
-    String tubeBarcodes = JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_POOL_TUBE_BARCODES"))
+    String tubeBarcodes = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("UAT_POOL_TUBE_BARCODES"))
     LOG.debug "tubeBarcodes = ${tubeBarcodes}"
 
     // split this into a list on comma and check it has 4 entries
@@ -74,8 +74,8 @@ void process( Issue curIssue ) {
     LOG.debug "normTubeDetails = ${normTubeDetails}"
 
     // set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_NORM_TUBE_BARCODES"), normTubeBarcodes)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_NORM_TUBE_BARCODES"), normTubeBarcodes)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_NORM_TUBE_DETAILS"), normTubeDetails)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_NORM_TUBE_DETAILS"), normTubeDetails)
 }

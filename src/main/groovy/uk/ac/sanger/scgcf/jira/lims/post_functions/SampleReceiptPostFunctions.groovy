@@ -4,7 +4,6 @@ import com.atlassian.jira.issue.Issue
 import com.atlassian.jira.issue.MutableIssue
 import com.atlassian.jira.issue.link.IssueLink
 import com.atlassian.jira.issue.link.IssueLinkType
-import com.atlassian.jira.util.ErrorCollection
 import groovy.util.logging.Slf4j
 import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueLinkTypeName
@@ -62,7 +61,7 @@ class SampleReceiptPostFunctions {
 
         // get the transition action id
         int actionId = ConfigReader.getTransitionActionId(
-                WorkflowName.PLATE_SS2.toString(), TransitionName.START_SUBMISSION.toString())
+                WorkflowName.PLATE_SS2.toString(), TransitionName.SS2_START_SUBMISSION.toString())
 
         // for each issue linked to the sample receipt
         outwardLinksList.each { IssueLink issLink ->
@@ -75,7 +74,7 @@ class SampleReceiptPostFunctions {
                     LOG.debug("Transitioning linked plate with Id ${linkedIssue.getId()} and summary ${linkedIssue.getSummary()}".toString())
                     MutableIssue mutableIssue = WorkflowUtils.getMutableIssueForIssueId(linkedIssue.getId())
                     if (mutableIssue != null && mutableIssue.getIssueType().getName() == IssueTypeName.PLATE_SS2.toString()
-                            && mutableIssue.getStatus().getName() == IssueStatusName.PLATESS2_RDY_FOR_SUBMISSION.toString()) {
+                            && mutableIssue.getStatus().getName() == IssueStatusName.PLTSS2_RDY_FOR_SUBMISSION.toString()) {
                         // transition the issue to In Submission
                         WorkflowUtils.transitionIssue(mutableIssue, actionId)
                     }

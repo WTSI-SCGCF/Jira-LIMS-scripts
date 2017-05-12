@@ -8,6 +8,6 @@ import org.slf4j.LoggerFactory
 // create logging class
 @Field private final Logger LOG = LoggerFactory.getLogger(getClass())
 
-def name = ConfigReader.getCustomFieldName("UAT_CUST_TUBE_BARCODES")
+def name = ConfigReader.getCFName("UAT_CUST_TUBE_BARCODES")
 LOG.debug "ConfigReader name = ${name}"
 name

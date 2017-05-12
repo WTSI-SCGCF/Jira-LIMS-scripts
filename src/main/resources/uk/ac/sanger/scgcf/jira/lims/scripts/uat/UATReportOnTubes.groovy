@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 import uk.ac.sanger.scgcf.jira.lims.actions.UATFunctions
 import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
 import uk.ac.sanger.scgcf.jira.lims.service_wrappers.JiraAPIWrapper
+import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
 
 // create logging class
 @Field private final Logger LOG = LoggerFactory.getLogger(getClass())
@@ -51,7 +52,7 @@ void process( Issue curIssue ) {
     LOG.debug "UAT Processing: Report On Tubes"
 
     // get the source barcodes
-    String tubeBarcodes = JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_NORM_TUBE_BARCODES"))
+    String tubeBarcodes = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("UAT_NORM_TUBE_BARCODES"))
     LOG.debug "tubeBarcodes = ${tubeBarcodes}"
 
     // split this into a list on comma and check it has 4 entries
@@ -76,18 +77,9 @@ void process( Issue curIssue ) {
 
 	// set the details custom field
     String repString = "Check attachment for report details"
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_REPORT_DETAILS"), repString)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_REPORT_DETAILS"), repString)
 
     def attachmentManager = ComponentAccessor.getAttachmentManager()
-
-    JiraAuthenticationContext jiraAuthenticationContext = ComponentAccessor.getJiraAuthenticationContext()
-    ApplicationUser user = jiraAuthenticationContext.getLoggedInUser()
-    if (user == null) {
-        LOG.error "User not found when creating report, cannot create attachment"
-        //TODO: error handling
-        return
-    }
-    LOG.debug "User for writing attachment : ${user.getName()}"
 
     // create File object
     File reportFile = File.createTempFile("temp", null)
@@ -113,7 +105,7 @@ void process( Issue curIssue ) {
             .file(reportFile)
             .filename(fileName)
             .contentType("text/html")
-            .author(user)
+            .author(WorkflowUtils.getLoggedInUser())
             .issue(curIssue)
             .build()
     attachmentManager.createAttachment(bean)

@@ -69,7 +69,7 @@ class CombinePlatesPostFunctions {
         LOG.debug "PF SetDNATypeOnCMB: Number of source plates = ${numTypesFound}"
         if(numTypesFound != 4) {
             LOG.debug "PF SetDNATypeOnCMB: ERROR: Unexpected number of source plates!"
-            JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("DNA_TYPE"), "ERROR check combine sources")
+            JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("DNA_TYPE"), "ERROR check combine sources")
             return
         }
 
@@ -77,12 +77,12 @@ class CombinePlatesPostFunctions {
         if(matchingKeys.size() == 4) {
             // if all the same v1 == v2 == v3 == v4 set DNA Type on CMB issue to 1 value
             LOG.debug "PF SetDNATypeOnCMB: all DNA Types matched"
-            JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("DNA_TYPE"), dnaTypesMap.get("1"))
+            JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("DNA_TYPE"), dnaTypesMap.get("1"))
         } else {
             // set DNA Type to 'Mixed(v1,v2,v3,v4)' in quadrant order
             LOG.debug "PF SetDNATypeOnCMB: DNA Types mixed"
             String outDNAType = "Mixed(" + [ dnaTypesMap.get("1"), dnaTypesMap.get("2"), dnaTypesMap.get("3"), dnaTypesMap.get("4") ].join(',') + ")"
-            JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("DNA_TYPE"), outDNAType)
+            JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("DNA_TYPE"), outDNAType)
         }
     }
 

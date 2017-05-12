@@ -7,7 +7,9 @@ package uk.ac.sanger.scgcf.jira.lims.enums
  */
 enum IssueLinkTypeName {
 
-    GROUP_INCLUDES("Group includes")
+    GROUP_INCLUDES("Group includes"),
+    RELATIONSHIPS("Relationships"),
+    USES_REAGENT("Uses Reagent")
 
     String linkTypeName
 

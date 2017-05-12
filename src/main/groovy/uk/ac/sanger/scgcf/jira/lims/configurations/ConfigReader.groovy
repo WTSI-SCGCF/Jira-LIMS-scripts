@@ -97,8 +97,8 @@ class ConfigReader {
      * @param cfAlias the alias name of the custom field
      * @return the name of the queried custom field
      */
-    static String getCustomFieldName(String cfAlias) {
-        checkConfigFileAvailability("In ConfigReader getCustomFieldName with alias <${cfAlias}>".toString())
+    static String getCFName(String cfAlias) {
+        checkConfigFileAvailability("In ConfigReader getCFName with alias <${cfAlias}>".toString())
 
         String cfName = null
         def element = configMap['custom_fields'][cfAlias]
@@ -107,8 +107,8 @@ class ConfigReader {
         }
 
         if (!cfName) {
-            LOG.error("ConfigReader getCustomFieldName: could not find cfname for alias <${cfAlias}>".toString())
-            throw new NoSuchElementException("No configmap element found for getCustomFieldName with alias: <${cfAlias}>".toString())
+            LOG.error("ConfigReader getCFName: could not find cfname for alias <${cfAlias}>".toString())
+            throw new NoSuchElementException("No configmap element found for getCFName with alias: <${cfAlias}>".toString())
         }
         LOG.debug("CF name = ${cfName}".toString())
         cfName
@@ -129,7 +129,7 @@ class ConfigReader {
         }
 
         if (cfId <= 0) {
-            LOG.error("ConfigReader getCustomFieldName: could not find cfid for alias <${cfAlias}>".toString())
+            LOG.error("ConfigReader getCFName: could not find cfid for alias <${cfAlias}>".toString())
             throw new NoSuchElementException("No configmap element found for getCFId with alias: <${cfAlias}>".toString())
         }
         LOG.debug("CF id = ${cfId}".toString())
@@ -151,7 +151,7 @@ class ConfigReader {
         }
 
         if (!cfIdString) {
-            LOG.error("ConfigReader getCustomFieldName: could not find cfidstring for alias <${cfAlias}>".toString())
+            LOG.error("ConfigReader getCFName: could not find cfidstring for alias <${cfAlias}>".toString())
             throw new NoSuchElementException("No configmap element found for getCFIdString with alias: <${cfAlias}>".toString())
         }
         LOG.debug("CF idString = ${cfIdString}".toString())

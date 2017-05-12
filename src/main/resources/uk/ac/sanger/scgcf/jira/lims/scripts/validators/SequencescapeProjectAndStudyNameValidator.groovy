@@ -25,31 +25,31 @@ def invalidInputException = new InvalidInputException()
 
 try {
     // get the project and study name from the issue
-    String projectName = JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("SEQS_PROJECT_NAME"))
+    String projectName = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("SEQS_PROJECT_NAME"))
     LOG.debug "The retrieved project name: '$projectName'"
 
-    String studyName = JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("SEQS_STUDY_NAME"))
+    String studyName = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("SEQS_STUDY_NAME"))
     LOG.debug "The retrieved study name: '$studyName'"
 
     def projectState = sequencescapeValidator.validateProjectName(projectName)
     if (projectState == SequencescapeEntityState.NOT_EXISTS) {
         invalidInputException.addError(
-                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCustomFieldName("SEQS_PROJECT_NAME")),
+                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCFName("SEQS_PROJECT_NAME")),
                 SequencescapeValidator.SS_PROJECT_NOT_EXISTS_ERROR_MESSAGE)
     } else if (projectState == SequencescapeEntityState.INACTIVE) {
         invalidInputException.addError(
-                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCustomFieldName("SEQS_PROJECT_NAME")),
+                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCFName("SEQS_PROJECT_NAME")),
                 SequencescapeValidator.SS_PROJECT_NOT_ACTIVE_ERROR_MESSAGE)
     }
 
     def studyState = sequencescapeValidator.validateStudyName(studyName)
     if (studyState == SequencescapeEntityState.NOT_EXISTS) {
         invalidInputException.addError(
-                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCustomFieldName("SEQS_STUDY_NAME")),
+                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCFName("SEQS_STUDY_NAME")),
                 SequencescapeValidator.SS_STUDY_NOT_EXISTS_ERROR_MESSAGE)
     } else if (studyState == SequencescapeEntityState.INACTIVE) {
         invalidInputException.addError(
-                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCustomFieldName("SEQS_STUDY_NAME")),
+                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCFName("SEQS_STUDY_NAME")),
                 SequencescapeValidator.SS_STUDY_NOT_ACTIVE_ERROR_MESSAGE)
     }
 } catch (Exception ex) {

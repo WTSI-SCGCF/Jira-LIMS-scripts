@@ -47,7 +47,7 @@ void process( Issue curIssue ) {
     LOG.debug "UAT Processing: Pool To Tubes"
 
     // get the source plate barcode
-    String plateBarcode = JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_SEL_STAMP_PLT_BARCODE"))
+    String plateBarcode = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("UAT_SEL_STAMP_PLT_BARCODE"))
     LOG.debug "source plate barcode = ${plateBarcode}"
 
     // send to UATFunction and return tube barcodes and details
@@ -64,8 +64,8 @@ void process( Issue curIssue ) {
     LOG.debug "poolTubeDetails = ${poolTubeDetails}"
 
     // set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_POOL_TUBE_BARCODES"), poolTubeBarcodes)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_POOL_TUBE_BARCODES"), poolTubeBarcodes)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_POOL_TUBE_DETAILS"), poolTubeDetails)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_POOL_TUBE_DETAILS"), poolTubeDetails)
 }

@@ -49,7 +49,7 @@ void process( Issue curIssue ) {
     LOG.debug "UAT Processing: Split Customer Tubes"
 
     // get the source barcodes
-    String tubeBarcodes = JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_CUST_TUBE_BARCODES"))
+    String tubeBarcodes = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("UAT_CUST_TUBE_BARCODES"))
     LOG.debug "tubeBarcodes = ${tubeBarcodes}"
 
     // split this into a list on comma and check it has 4 entries
@@ -73,8 +73,8 @@ void process( Issue curIssue ) {
     LOG.debug "Elapsed time in split customer tubes: ${elapsedTime / 1000} seconds."
 
    // set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_SPLIT_PLT_BARCODES"), splitPlateBarcodes)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_SPLIT_PLT_BARCODES"), splitPlateBarcodes)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_SPLIT_PLT_DETAILS"), splitPlateDetails)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_SPLIT_PLT_DETAILS"), splitPlateDetails)
 }

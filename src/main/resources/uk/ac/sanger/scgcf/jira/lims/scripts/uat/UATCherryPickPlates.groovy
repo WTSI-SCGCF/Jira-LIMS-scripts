@@ -47,7 +47,7 @@ void process( Issue curIssue ) {
 	LOG.debug "UAT Processing: Cherry Pick Plates"
 
 	// get the source plate barcodes
-	String plateBarcodes = JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_SPLIT_PLT_BARCODES"))
+	String plateBarcodes = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("UAT_SPLIT_PLT_BARCODES"))
 	LOG.debug "source plate barcodes = ${plateBarcodes}"
 
     // split this into a list on comma and check it has 4 entries
@@ -70,8 +70,8 @@ void process( Issue curIssue ) {
     LOG.debug "Elapsed time in cherry pick: ${elapsedTime / 1000} seconds."
 
 	// set the barcodes custom field
-	JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_CHRY_PLT_BARCODE"), chryPickPlateBarcode)
+	JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_CHRY_PLT_BARCODE"), chryPickPlateBarcode)
 
 	// set the details custom field
-	JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_CHRY_PLT_DETAILS"), chryPickPlateDetails)
+	JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_CHRY_PLT_DETAILS"), chryPickPlateDetails)
 }

@@ -47,7 +47,7 @@ void process( Issue curIssue ) {
     LOG.debug "UAT Processing: Selectively Stamp Plate"
 
     // get the source plate barcode
-    String plateBarcode = JiraAPIWrapper.getCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_STAMP_PLT_BARCODE"))
+    String plateBarcode = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("UAT_STAMP_PLT_BARCODE"))
     LOG.debug "source plate barcode = ${plateBarcode}"
 
     // send to UATFunction and return plate barcodes and details
@@ -61,8 +61,8 @@ void process( Issue curIssue ) {
     LOG.debug "Elapsed time in selective stamp: ${elapsedTime / 1000} seconds."
 
     // set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_SEL_STAMP_PLT_BARCODE"), selStampPlateBarcode)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_SEL_STAMP_PLT_BARCODE"), selStampPlateBarcode)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCustomFieldName("UAT_SEL_STAMP_PLT_DETAILS"), selStampPlateDetails)
+    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_SEL_STAMP_PLT_DETAILS"), selStampPlateDetails)
 }

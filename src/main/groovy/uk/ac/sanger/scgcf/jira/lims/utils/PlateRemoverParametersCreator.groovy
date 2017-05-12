@@ -28,7 +28,7 @@ class PlateRemoverParametersCreator {
         plateActionParams.plateWorkflowName = WorkflowName.PLATE_SS2
         plateActionParams.currentWorkflowName = WorkflowName.SMART_SEQ2
         plateActionParams.statusToTransitionMap.put(
-                SS2PlateStateName.PLATESS2_IN_SS2.toString(), TransitionName.REVERT_TO_READY_FOR_SS2.toString())
+                SS2PlateStateName.PLATESS2_IN_SS2.toString(), TransitionName.SS2_REVERT_TO_READY_FOR_SS2.toString())
         plateActionParams.linkTypeName = IssueLinkTypeName.GROUP_INCLUDES
         plateActionParams.issueTypeName = IssueTypeName.PLATE_SS2
 
@@ -47,7 +47,7 @@ class PlateRemoverParametersCreator {
         plateActionParams.plateWorkflowName = WorkflowName.PLATE_SS2
         plateActionParams.currentWorkflowName = WorkflowName.IMD
         plateActionParams.statusToTransitionMap.put(
-                SS2PlateStateName.PLATESS2_IN_IMD.toString(), TransitionName.REVERT_TO_WITH_CUSTOMER.toString())
+                SS2PlateStateName.PLATESS2_IN_IMD.toString(), TransitionName.SS2_REVERT_TO_WITH_CUSTOMER.toString())
         plateActionParams.linkTypeName = IssueLinkTypeName.GROUP_INCLUDES
         plateActionParams.issueTypeName = IssueTypeName.PLATE_SS2
 
@@ -67,15 +67,15 @@ class PlateRemoverParametersCreator {
         plateActionParams.currentWorkflowName = WorkflowName.SUBMISSION
 
         plateActionParams.statusToTransitionMap.put(
-                SS2PlateStateName.PLATESS2_IN_SUBMISSION.toString(), TransitionName.REVERT_TO_READY_FOR_SUBMISSION.toString())
+                SS2PlateStateName.PLATESS2_IN_SUBMISSION.toString(), TransitionName.SS2_REVERT_TO_READY_FOR_SUBMISSION.toString())
         plateActionParams.statusToTransitionMap.put(
-                SS2PlateStateName.PLATESS2_RDY_FOR_SS2.toString(), TransitionName.REVERT_TO_READY_FOR_SUBMISSION.toString())
+                SS2PlateStateName.PLATESS2_RDY_FOR_SS2.toString(), TransitionName.SS2_REVERT_TO_READY_FOR_SUBMISSION.toString())
         plateActionParams.statusToTransitionMap.put(
-                SS2PlateStateName.PLATESS2_RDY_FOR_IQC.toString(), TransitionName.REVERT_TO_READY_FOR_SUBMISSION.toString())
+                SS2PlateStateName.PLATESS2_RDY_FOR_IQC.toString(), TransitionName.SS2_REVERT_TO_READY_FOR_SUBMISSION.toString())
         plateActionParams.statusToTransitionMap.put(
-                DNAPlateStateName.PLATEDNA_RDY_FOR_IQC.toString(), TransitionName.REVERT_TO_READY_FOR_SUBMISSION.toString())
+                DNAPlateStateName.PLATEDNA_RDY_FOR_IQC.toString(), TransitionName.SS2_REVERT_TO_READY_FOR_SUBMISSION.toString())
         plateActionParams.statusToTransitionMap.put(
-                DNAPlateStateName.PLATEDNA_IN_SUBMISSION.toString(), TransitionName.REVERT_TO_READY_FOR_SUBMISSION.toString())
+                DNAPlateStateName.PLATEDNA_IN_SUBMISSION.toString(), TransitionName.SS2_REVERT_TO_READY_FOR_SUBMISSION.toString())
 
         plateActionParams.linkTypeName = IssueLinkTypeName.GROUP_INCLUDES
         plateActionParams.issueTypeName = IssueTypeName.PLATE_SS2
@@ -95,7 +95,7 @@ class PlateRemoverParametersCreator {
         plateActionParams.plateWorkflowName = WorkflowName.PLATE_SS2
         plateActionParams.currentWorkflowName = WorkflowName.SAMPLE_RECEIPT
         plateActionParams.statusToTransitionMap.put(
-                SS2PlateStateName.PLATESS2_IN_RECEIVING.toString(), TransitionName.REVERT_TO_READY_FOR_RECEIVING.toString())
+                SS2PlateStateName.PLATESS2_IN_RECEIVING.toString(), TransitionName.SS2_REVERT_TO_READY_FOR_RECEIVING.toString())
         plateActionParams.linkTypeName = IssueLinkTypeName.GROUP_INCLUDES
         plateActionParams.issueTypeName = IssueTypeName.PLATE_SS2
 

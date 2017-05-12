@@ -11,9 +11,9 @@ class ConfigReaderSpec extends Specification {
 
     def 'test can read config file'() {
         expect: "test can read custom field aliases"
-        assert ConfigReader.getCustomFieldName("UAT_CUST_TUBE_BARCODES") == "UAT cust tube barcodes"
+        assert ConfigReader.getCFName("UAT_CUST_TUBE_BARCODES") == "UAT cust tube barcodes"
 
-        assert ConfigReader.getCustomFieldName("UAT_CUST_TUBE_DETAILS") == "UAT cust tube details"
+        assert ConfigReader.getCFName("UAT_CUST_TUBE_DETAILS") == "UAT cust tube details"
 
         assert ConfigReader.getConfigElement(
                 ["validation", "mandatoryFields", "ProjectName_1", "Type_1", "action_1"]) ==
@@ -35,11 +35,11 @@ class ConfigReaderSpec extends Specification {
         String testAlias = "THIS_DOES_NOT_EXIST"
 
         when:
-        ConfigReader.getCustomFieldName(testAlias)
+        ConfigReader.getCFName(testAlias)
 
         then: "NoSuchElementException will be thrown"
         NoSuchElementException ex1 = thrown()
-        ex1.message == "No configmap element found for getCustomFieldName with alias: <${testAlias}>".toString()
+        ex1.message == "No configmap element found for getCFName with alias: <${testAlias}>".toString()
 
         when:
         ConfigReader.getCFId(testAlias)
