@@ -34,19 +34,4 @@ abstract class BaseIssueAction implements IssueAction {
         }
     }
 
-    protected String[] getCustomFieldValuesByName() {
-        String[] selectedValues
-        def customFieldManager = ComponentAccessor.getCustomFieldManager()
-        def customField = customFieldManager.getCustomFieldObject(ConfigReader.getCFId(customFieldName))
-        if (customField != null) {
-            // the value of the nFeed field is an array of long issue ids for the selected plates
-            selectedValues = curIssue.getCustomFieldValue(customField)
-        } else {
-            LOG.error("Failed to get the plate array custom field for adding plates")
-        }
-
-        selectedValues
-    }
-
-
 }

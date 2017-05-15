@@ -133,6 +133,8 @@ class SPRiPlateCleanupPostFunctions {
      */
     public static void processPlateFailedCleanup(Issue spriIssue, String sourcePlateIdStr) {
 
+        def sSPRiFeedbackComments = JiraAPIWrapper.getCFValueByName(spriIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"))
+
         Map<String, String> barcodesMap = fetchSPRiBarcodes(spriIssue)
 
         Long sourcePlateIdLong = Long.parseLong(sourcePlateIdStr)
@@ -178,7 +180,7 @@ class SPRiPlateCleanupPostFunctions {
                             WorkflowName.PLATE_CMB.toString(), TransitionName.CMB_FAIL_IN_SPRI.toString())
 
                     // process the parent plates of the combine plate (may be re-runnable)
-                    processCombinePlate(curSourceMutIssue)
+                    processCombinePlate(curSourceMutIssue, sSPRiFeedbackComments)
                 }
 
                 LOG.debug "Source action id = ${sourceActionId}"
@@ -187,6 +189,11 @@ class SPRiPlateCleanupPostFunctions {
                     // transition source plate issue
                     // to either 'Failed' (resolution 'Failed in SPRi') for CMB, or to 'In SPRi Feedback' for SS2 or DNA
                     WorkflowUtils.transitionIssue(curSourceMutIssue, sourceActionId)
+
+                    // set SPRi feedback on source plate issue (re-fetch issue first)
+                    curSourceMutIssue = WorkflowUtils.getMutableIssueForIssueId(sourcePlateIdLong)
+                    JiraAPIWrapper.setCustomFieldValueByName(curSourceMutIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
+
                 } else {
                     LOG.error "Source action id not found, cannot transition source for ID ${sourcePlateIdStr}"
                 }
@@ -217,10 +224,10 @@ class SPRiPlateCleanupPostFunctions {
      *
      * @param cmbPlateMutIssue
      */
-    private static void processCombinePlate(MutableIssue cmbPlateMutIssue) {
+    private static void processCombinePlate(MutableIssue cmbPlateMutIssue, String sSPRiFeedbackComments) {
 
         // get the issue link type
-        IssueLinkType plateLinkType = WorkflowUtils.getIssueLinkType(IssueLinkTypeName.GROUP_INCLUDES.toString())
+        IssueLinkType plateLinkType = WorkflowUtils.getIssueLinkType(IssueLinkTypeName.RELATIONSHIPS.toString())
 
         // get the linked plate issues from the Combine Plates issue
         List<IssueLink> outwardLinksList = WorkflowUtils.getOutwardLinksListForIssueId(cmbPlateMutIssue.getId())
@@ -254,6 +261,10 @@ class SPRiPlateCleanupPostFunctions {
                 if(curStatus.equals(IssueStatusName.PLTSS2_DONE_EMPTY.toString())) {
                     destActionId = ConfigReader.getTransitionActionId(
                             WorkflowName.PLATE_SS2.toString(), TransitionName.SS2_FAIL_IN_SPRI_96.toString())
+
+                    // set SPRi feedback on source plate
+                    LOG.debug "Attempting to set SPRi comments on parent SS2 plate"
+                    JiraAPIWrapper.setCustomFieldValueByName(curAncestorIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
                 }
                 if(curStatus.equals(IssueStatusName.PLTSS2_DONE_NOT_EMPTY.toString())) {
                     destActionId = ConfigReader.getTransitionActionId(
@@ -262,6 +273,9 @@ class SPRiPlateCleanupPostFunctions {
                 if(curStatus.equals(IssueStatusName.PLTDNA_DONE_EMPTY.toString())) {
                     destActionId = ConfigReader.getTransitionActionId(
                             WorkflowName.PLATE_DNA.toString(), TransitionName.DNA_FAIL_IN_SPRI_96.toString())
+
+                    // set SPRi feedback on source plate
+                    JiraAPIWrapper.setCustomFieldValueByName(curAncestorIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
                 }
                 if(curStatus.equals(IssueStatusName.PLTDNA_DONE_NOT_EMPTY.toString())) {
                     destActionId = ConfigReader.getTransitionActionId(
@@ -291,7 +305,7 @@ class SPRiPlateCleanupPostFunctions {
 
         // fetch common fields from SPRi issue
         int numberOfPlates = Double.valueOf(JiraAPIWrapper.getCFValueByName(spriIssue, ConfigReader.getCFName("NUMBER_OF_PLATES"))).intValue()
-        LOG.debug "Number of plates =  ${numberOfPlates}"
+        LOG.debug "Number of plates = ${numberOfPlates}"
 
         Map<String, String> barcodesMap = [:]
 
@@ -323,6 +337,6 @@ class SPRiPlateCleanupPostFunctions {
         LOG.debug "Barcodes map size = ${barcodesMap.size()}"
         LOG.debug barcodesMap.toMapString()
         barcodesMap
-
     }
+
 }

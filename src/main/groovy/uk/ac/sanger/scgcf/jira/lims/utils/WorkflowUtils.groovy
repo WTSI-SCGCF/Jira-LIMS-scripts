@@ -186,10 +186,14 @@ class WorkflowUtils {
      * @return the error collection if the validation or transition fail, otherwise nothing
      */
     public static void transitionIssue(MutableIssue issue, int actionId) {
+
+        LOG.debug "Attempting to transition issue with Id <${issue.getId()}> through transition with Id <${actionId}>"
+
         // set up the transition
+        ApplicationUser user = getLoggedInUser()
+
         WorkflowTransitionUtil wfTransUtil = JiraUtils.loadComponent(WorkflowTransitionUtilImpl.class)
         wfTransUtil.setIssue(issue)
-        ApplicationUser user = getLoggedInUser()
         wfTransUtil.setUserkey(user.getKey())
         wfTransUtil.setAction(actionId)
 
@@ -214,6 +218,8 @@ class WorkflowUtils {
             stringErrors.eachWithIndex { String err, int i ->
                 LOG.error("Error ${i}: ${err}".toString())
             }
+        } else {
+            LOG.debug "Transition performed successfully"
         }
     }
 
@@ -375,6 +381,7 @@ class WorkflowUtils {
 
     /**
      * Fetch the array of selected issue ids from an nFeed select field.
+     * N.B. Handles both deprecated and new nFeed fields
      *
      * @param curIssue
      * @param cfAlias

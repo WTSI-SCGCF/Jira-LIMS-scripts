@@ -18,7 +18,7 @@ import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
 class PlateAdder extends BaseIssueAction {
 
     Map<String, PlateActionParameterHolder> plateActionParameterHolders
-    String[] selectedValues
+    ArrayList<String> selectedIssueIds
 
     public PlateAdder(Issue curIssue, String issueTypeName, String customFieldName) {
         super(curIssue, issueTypeName, customFieldName)
@@ -31,18 +31,18 @@ class PlateAdder extends BaseIssueAction {
 
         LOG.debug "Post-function for adding plates to $issueTypeName workflow".toString()
 
-        selectedValues = getCustomFieldValuesByName()
+        selectedIssueIds = WorkflowUtils.getIssueIdsFromNFeedField(curIssue, customFieldName)
 
         //if user hasn't selected anything do nothing further
-        if (selectedValues == null) {
+        if (selectedIssueIds == null) {
             LOG.debug("No items selected, nothing to do")
             return
         }
 
-        selectedValues.each { LOG.debug "Plate ID: $it has been selected to add" }
+        selectedIssueIds.each { LOG.debug "Plate ID: $it has been selected to add" }
 
         PlateActionParameterHolder parameters = plateActionParameterHolders.get(issueTypeName)
-        parameters.plateIds = selectedValues
+        parameters.plateIds = selectedIssueIds
 
         // link and transition the plate issue(s)
         WorkflowUtils.addPlatesToGivenGrouping(parameters)

@@ -19,7 +19,7 @@ class PlateRemover extends BaseIssueAction {
 
     Map<String, PlateActionParameterHolder> plateActionParameterHolders
     List<String> fieldNamesToClear
-    String[] selectedValues
+    ArrayList<String> selectedIssueIds
 
     public PlateRemover(Issue curIssue, String issueTypeName, String customFieldName,
                         List<String> fieldNamesToClear = new ArrayList<>()) {
@@ -34,18 +34,18 @@ class PlateRemover extends BaseIssueAction {
 
         LOG.debug "Post-function for removing plates from a $issueTypeName workflow".toString()
 
-        selectedValues = getCustomFieldValuesByName()
+        selectedIssueIds = WorkflowUtils.getIssueIdsFromNFeedField(curIssue, customFieldName)
 
         //if user hasn't selected anything do nothing further
-        if (selectedValues == null) {
+        if (selectedIssueIds == null) {
             LOG.debug("No items selected, nothing to do")
             return
         }
 
-        selectedValues.each { LOG.debug "Plate ID: $it has been selected to add" }
+        selectedIssueIds.each { LOG.debug "Plate ID: $it has been selected to add" }
 
         PlateActionParameterHolder parameters = plateActionParameterHolders.get(issueTypeName)
-        parameters.plateIds = selectedValues
+        parameters.plateIds = selectedIssueIds
 
         // unlink and revert the plate issue(s)
         WorkflowUtils.removePlatesFromGivenGrouping(parameters, fieldNamesToClear)

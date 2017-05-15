@@ -24,7 +24,8 @@ class SmartSeq2PostFunctions {
      * @param arrayPlateIds the list of plate issue ids
      * @param submIssue the Submission issue
      */
-    public static void transitionPlates(String[] arrayPlateIds, WorkflowName workflowName, IssueTypeName issueTypeName,
+    // TODO: replace by calling a generic transition plates in WorkflowUtils
+    public static void transitionPlates(ArrayList<String> arrayPlateIds, WorkflowName workflowName, IssueTypeName issueTypeName,
                                         IssueStatusName fromIssueStatusName, IssueStatusName toIssueStatusName,
                                         TransitionName transitionName) {
 

@@ -8,6 +8,8 @@ import com.atlassian.jira.issue.IssueInputParameters
 import com.atlassian.jira.issue.fields.CustomField
 import com.atlassian.jira.security.JiraAuthenticationContext
 import com.atlassian.jira.user.ApplicationUser
+import com.atlassian.jira.util.ErrorCollection
+import com.atlassian.jira.util.WarningCollection
 import groovy.util.logging.Slf4j
 import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
 
@@ -29,6 +31,7 @@ class JiraAPIWrapper {
         customFieldManager
     }
 
+    //TODO: move all functions to WorkflowUtils
     /**
      * Get a custom field object from its name
      *
@@ -36,7 +39,7 @@ class JiraAPIWrapper {
      * @return CustomField object
      */
     static CustomField getCustomFieldByName(String cfName) {
-        LOG.debug "Custom field name: ${cfName}"
+        LOG.debug "Get custom field for name: ${cfName}"
         // assumption here that custom field name is unique
         def customFields = getCustomFieldManager().getCustomFieldObjectsByName(cfName)
         if (customFields != null) {
@@ -57,7 +60,7 @@ class JiraAPIWrapper {
      * TODO: handle various exceptions and fail silently
      */
     static String getCFValueByName(Issue curIssue, String cfName) {
-        LOG.debug "Custom field name: ${cfName}"
+        LOG.debug "Get custom field value for name: ${cfName}"
         String cfValue = curIssue.getCustomFieldValue(getCustomFieldByName(cfName)) as String
         LOG.debug("CF value: ${cfValue}")
         cfValue
@@ -115,52 +118,84 @@ class JiraAPIWrapper {
 
     /**
      * Set the value of a specified custom field for an issue
+     * NB. A CUSTOM FIELD CAN ONLY BE SET IF THE FIELD IS IN THE EDIT VIEW OF THE ISSUE WORKFLOW!
+     * e.g. to set MyCustomField on a plate issue it must be listed in the plate Edit screen
      *
      * @param curIssue
      * @param cfName
      * @param newValue
      * TODO: this needs to handle custom fields other than strings
+     * TODO: should this input a MutableIssue?
      */
     static void setCustomFieldValueByName(Issue curIssue, String cfName, String newValue) {
-        LOG.debug "setCustomFieldValueByName: Custom field name: ${cfName}"
-        LOG.debug "setCustomFieldValueByName: New value: ${newValue}"
+        LOG.debug "Attempting to set customfield value by name"
+        LOG.debug "Issue Id: ${curIssue.getId()}"
+        LOG.debug "Custom field name: ${cfName}"
+        LOG.debug "New value: ${newValue}"
 
         IssueService issueService = ComponentAccessor.getIssueService()
 
         // locate the custom field for the current issue from its name
         def tgtField = getCustomFieldManager().getCustomFieldObjects(curIssue).find { it.name == cfName }
         if (tgtField == null) {
-            LOG.error "setCustomFieldValueByName: Custom field with name <${cfName}> was not found, cannot set value"
-            //TODO: error handling
+            LOG.error "Custom field with name <${cfName}> was not found, cannot set value"
+            //TODO: what error handling is required here? should not fail silently?
             return
         }
+        LOG.debug "Custom field instance ID : ${tgtField.getId()}"
 
         // update the value of the field and save the change in the database
         IssueInputParameters issueInputParameters = issueService.newIssueInputParameters()
-        LOG.debug "setCustomFieldValueByName: tgtField ID : ${tgtField.getId()}"
-
         issueInputParameters.addCustomFieldValue(tgtField.getId(), newValue)
 
         IssueService.UpdateValidationResult updateValidationResult = issueService.validateUpdate(WorkflowUtils.getLoggedInUser(), curIssue.getId(), issueInputParameters)
 
         if (updateValidationResult.isValid()) {
-            LOG.debug "setCustomFieldValueByName: Issue update validated, running update"
+            LOG.debug "Issue update validation passed, running update"
             IssueService.IssueResult updateResult = issueService.update(WorkflowUtils.getLoggedInUser(), updateValidationResult);
-            if (!updateResult.isValid()) {
-                LOG.error "setCustomFieldValueByName: Custom field with name <${cfName}> could not be updated to value <${newValue}>"
-                // TODO: error handling
+            if (updateResult.isValid()) {
+                LOG.debug "Issue updated successfully"
+                if(updateResult.hasWarnings()) {
+                    LOG.debug "Warnings present"
+                    WarningCollection warnings = updateResult.getWarningCollection()
+                    if (warnings.hasAnyWarnings()) {
+                        Collection<String> messages = warnings.getWarnings()
+                        messages.each {String message ->
+                            LOG.debug(message)
+                        }
+                    }
+                }
+            } else {
+                LOG.error "Update failed! Custom field with name <${cfName}> could not be updated to value <${newValue}>"
+                ErrorCollection errors=updateResult.getErrorCollection()
+                if (errors.hasAnyErrors()) {
+                    LOG.error "Errors present"
+                    Map<String,String> messages=errors.getErrors()
+                    for (Map.Entry<String,String> message : messages.entrySet()) {
+                        LOG.error(message.getKey() + " : " + message.getValue())
+                    }
+                }
             }
         } else {
-            LOG.error "setCustomFieldValueByName: updateValidationResult false, custom field with name <${cfName}> could not be updated to value <${newValue}>"
-            // TODO: error handling
+            LOG.error "Update validation failed! custom field with name <${cfName}> could not be updated to value <${newValue}>"
+            ErrorCollection errors=updateValidationResult.getErrorCollection();
+            if (errors.hasAnyErrors()) {
+                LOG.error "Errors present"
+                Map<String,String> messages=errors.getErrors();
+                for (      Map.Entry<String,String> message : messages.entrySet()) {
+                    LOG.error(message.getKey() + " : " + message.getValue());
+                }
+            }
         }
     }
 
     /**
      * Clear the value of a specified custom field for an issue
+     * NB. Better to use Clear field post function.
      *
      * @param cfName
      * TODO: this needs to handle custom fields other than strings
+     * TODO: should this input a MutableIssue?
      */
     static void clearCustomFieldValueByName(Issue curIssue, String cfName) {
         setCustomFieldValueByName(curIssue, cfName, "")
@@ -174,7 +209,7 @@ class JiraAPIWrapper {
      * @return String id of custom field
      */
     static String getCustomFieldIDByName(String cfName) {
-        LOG.debug "Custom field name: ${cfName}"
+        LOG.debug "Get custom field Id for name: ${cfName}"
         String cfID = getCustomFieldByName(cfName).id
         LOG.debug("CF idString: ${cfID}")
         cfID
