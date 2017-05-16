@@ -417,6 +417,9 @@ class WorkflowUtils {
                     arrayIds.each { String idString ->
                         ids.add(idString)
                     }
+                } else if(nFeedValueAsString ==~ /\d+/) {
+                    LOG.debug "nFeed field is returning single id"
+                    ids.add(nFeedValueAsString)
                 } else {
                     LOG.error "nFeed field is returning unexpected data type, cannot parse"
                 }
