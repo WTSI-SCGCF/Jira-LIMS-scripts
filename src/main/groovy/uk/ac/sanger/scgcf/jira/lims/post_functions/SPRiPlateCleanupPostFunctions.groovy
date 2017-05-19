@@ -226,11 +226,18 @@ class SPRiPlateCleanupPostFunctions {
      */
     private static void processCombinePlate(MutableIssue cmbPlateMutIssue, String sSPRiFeedbackComments) {
 
+        LOG.debug "Processing CMB plate with Key = ${cmbPlateMutIssue.getKey()}"
+
         // get the issue link type
         IssueLinkType plateLinkType = WorkflowUtils.getIssueLinkType(IssueLinkTypeName.RELATIONSHIPS.toString())
+        LOG.debug "Plate link type name = ${plateLinkType.getName()}"
+        LOG.debug "Plate link type inward = ${plateLinkType.inward}"
+        LOG.debug "Plate link type outward = ${plateLinkType.outward}"
 
         // get the linked plate issues from the Combine Plates issue
         List<IssueLink> outwardLinksList = WorkflowUtils.getOutwardLinksListForIssueId(cmbPlateMutIssue.getId())
+
+        LOG.debug "Number of links from CMB plate to check = ${outwardLinksList.size()}"
 
         def customFieldManager  = ComponentAccessor.getCustomFieldManager()
         def cfBarcode           = customFieldManager.getCustomFieldObject(ConfigReader.getCFId('BARCODE'))
@@ -238,12 +245,19 @@ class SPRiPlateCleanupPostFunctions {
 
         // for each linked plate issue (NB. sources and destinations)
         outwardLinksList.each { IssueLink issLink ->
+
+            LOG.debug "Issue link type name = ${issLink.issueLinkType.getName()}"
+
             Issue curAncestorIssue = issLink.getDestinationObject()
+
+            LOG.debug "Found outward linked issue with Key = ${curAncestorIssue.getKey()}"
 
             // only want source plates (not Study or child plates etc.)
             if ((curAncestorIssue.getIssueType().name == IssueTypeName.PLATE_SS2.toString()
                     || curAncestorIssue.getIssueType().name == IssueTypeName.PLATE_DNA.toString())
                     && issLink.getIssueLinkType() == plateLinkType) {
+
+                LOG.debug "Ancestor issue is SS2 or DNA plate and has link type relationships <${issLink.getIssueLinkType().getName()}>"
 
                 // for each source plate issue fetch the 'Barcode', 'Combine Quadrant' value (1-4) and status
                 String curBarcode           = curAncestorIssue.getCustomFieldValue(cfBarcode)
@@ -263,23 +277,26 @@ class SPRiPlateCleanupPostFunctions {
                             WorkflowName.PLATE_SS2.toString(), TransitionName.SS2_FAIL_IN_SPRI_96.toString())
 
                     // set SPRi feedback on source plate
-                    LOG.debug "Attempting to set SPRi comments on parent SS2 plate"
+                    LOG.debug "Source SS2 plate is Empty. Attempting to set SPRi comments on source SS2 plate"
                     JiraAPIWrapper.setCustomFieldValueByName(curAncestorIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
                 }
                 if(curStatus.equals(IssueStatusName.PLTSS2_DONE_NOT_EMPTY.toString())) {
                     destActionId = ConfigReader.getTransitionActionId(
                             WorkflowName.PLATE_SS2.toString(), TransitionName.SS2_RE_RUN_REQUESTED_BY_SPRI.toString())
+                    LOG.debug "Source SS2 plate is NOT Empty"
                 }
                 if(curStatus.equals(IssueStatusName.PLTDNA_DONE_EMPTY.toString())) {
                     destActionId = ConfigReader.getTransitionActionId(
                             WorkflowName.PLATE_DNA.toString(), TransitionName.DNA_FAIL_IN_SPRI_96.toString())
 
                     // set SPRi feedback on source plate
+                    LOG.debug "Source DNA plate is Empty. Attempting to set SPRi comments on source DNA plate"
                     JiraAPIWrapper.setCustomFieldValueByName(curAncestorIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
                 }
                 if(curStatus.equals(IssueStatusName.PLTDNA_DONE_NOT_EMPTY.toString())) {
                     destActionId = ConfigReader.getTransitionActionId(
                             WorkflowName.PLATE_DNA.toString(), TransitionName.DNA_RE_RUN_REQUESTED_BY_SPRI.toString())
+                    LOG.debug "Source DNA plate is NOT Empty"
                 }
 
                 if(destActionId > 0) {
@@ -292,6 +309,8 @@ class SPRiPlateCleanupPostFunctions {
                 }
             }
         }
+
+        LOG.debug "Combine plate processing completed"
 
     }
 
