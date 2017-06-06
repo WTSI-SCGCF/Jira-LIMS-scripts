@@ -14,5 +14,5 @@ Issue curIssue = issue
  * Created by ke4 on 06/02/2017.
  */
 
-PlateRemover plateRemover = new PlateRemover(curIssue, WorkflowName.SUBMISSION.toString(), "GENERIC_REMOVE_PLATES")
+PlateRemover plateRemover = new PlateRemover(curIssue, WorkflowName.SUBMISSIONS.toString(), "GENERIC_REMOVE_PLATES")
 plateRemover.execute()

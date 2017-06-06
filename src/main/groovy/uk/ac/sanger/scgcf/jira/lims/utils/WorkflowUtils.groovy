@@ -1,8 +1,10 @@
 package uk.ac.sanger.scgcf.jira.lims.utils
 
-import com.atlassian.jira.ComponentManager
+import com.atlassian.jira.bc.issue.IssueService
 import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.exception.CreateException
 import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.IssueInputParameters
 import com.atlassian.jira.issue.IssueManager
 import com.atlassian.jira.issue.MutableIssue
 import com.atlassian.jira.issue.fields.CustomField
@@ -15,12 +17,8 @@ import com.atlassian.jira.issue.search.SearchResults
 import com.atlassian.jira.jql.builder.JqlClauseBuilder
 import com.atlassian.jira.jql.builder.JqlQueryBuilder
 import com.atlassian.jira.security.JiraAuthenticationContext
-import com.atlassian.jira.util.ErrorCollection
-import com.atlassian.jira.util.JiraUtils
 import com.atlassian.jira.web.bean.PagerFilter
 import com.atlassian.jira.workflow.JiraWorkflow
-import com.atlassian.jira.workflow.WorkflowTransitionUtil
-import com.atlassian.jira.workflow.WorkflowTransitionUtilImpl
 import com.atlassian.jira.user.ApplicationUser
 import com.atlassian.query.Query
 import groovy.util.logging.Slf4j
@@ -46,6 +44,7 @@ class WorkflowUtils {
      * needed for adding a plate to the given grouping issue
      */
     public static void addPlatesToGivenGrouping(PlateActionParameterHolder plateActionParams) {
+
         executePlateAction(
             plateActionParams,
             { Issue mutableIssue ->
@@ -55,6 +54,7 @@ class WorkflowUtils {
                 "Attempting to link plate with ID ${plateIdString} to ${plateActionParams.currentWorkflowName} workflow with ID ${plateActionParams.currentIssue.id}".toString()
             }
         )
+
     }
 
     /**
@@ -63,11 +63,13 @@ class WorkflowUtils {
      * @param plateActionParams a <code>PlateActionParameterHolder</code> object holding all the parameters
      * needed for removing a plate from the given grouping issue
      */
-    public static void removePlatesFromGivenGrouping(PlateActionParameterHolder plateActionParams, List<String> fieldNamesToClear) {
+    public
+    static void removePlatesFromGivenGrouping(PlateActionParameterHolder plateActionParams, List<String> fieldNamesToClear) {
+
         executePlateAction(
                 plateActionParams,
                 { Issue mutableIssue ->
-                    removeIssueLink(plateActionParams.currentIssue, mutableIssue, plateActionParams.linkTypeName)
+                    removeIssueLink(plateActionParams.currentIssue.getId(), mutableIssue.getId(), plateActionParams.linkTypeName)
                     if (fieldNamesToClear) {
                         clearFieldsValue(fieldNamesToClear, mutableIssue)
                     }
@@ -76,6 +78,7 @@ class WorkflowUtils {
                     "Removing link to plate with ID ${plateIdString} from ${plateActionParams.currentWorkflowName}".toString()
                 }
         )
+
     }
 
     /**
@@ -88,31 +91,59 @@ class WorkflowUtils {
     private static void executePlateAction(PlateActionParameterHolder plateActionParams, Closure actionToExecute,
                                            Closure messageClosure) {
 
+        // process each plate id in the list
         plateActionParams.plateIds.each { String plateIdString ->
+
             Long plateIdLong = Long.parseLong(plateIdString)
-            LOG.debug((String)messageClosure(plateIdString))
 
+            // use the message closure to print a log
+            LOG.debug((String) messageClosure(plateIdString))
+
+            // get the issue for the plate id and check not null
             MutableIssue mutableIssue = getMutableIssueForIssueId(plateIdLong)
-
-            if(mutableIssue != null) {
+            if (mutableIssue != null) {
                 LOG.debug("Issue type = ${mutableIssue.getIssueType().getName()} and plate action issue type = ${plateActionParams.issueTypeName}")
             } else {
-                LOG.debug("Issue null")
+                LOG.error("ERROR: Plate issue null for Id <${plateIdString}>, cannot process plate action")
             }
 
-            if(mutableIssue != null && mutableIssue.getIssueType().getName() == plateActionParams.issueTypeName) {
+            // check the issue type of the plate matches to the expected type passed in the parameters
+            if (mutableIssue != null) {
+                if (mutableIssue.getIssueType().getName() == plateActionParams.issueTypeName) {
+                    LOG.debug "Plate issue type name matches expected <${plateActionParams.issueTypeName}>, attempting to process action"
 
-                actionToExecute(mutableIssue)
+                    // process the action closure
+                    actionToExecute(mutableIssue)
 
-                String issueStatusName = mutableIssue.getStatus().getName()
+                    LOG.debug "Returned from processing plate action, now checking if plate needs to be transitioned"
 
-                if( plateActionParams.statusToTransitionMap.keySet().contains(issueStatusName))  {
-                    String transitionName = plateActionParams.statusToTransitionMap.get(issueStatusName)
-                    LOG.debug("Attempting to fetch action ID for workflow ${plateActionParams.plateWorkflowName} and transition name $transitionName")
-                    int actionId = ConfigReader.getTransitionActionId(plateActionParams.plateWorkflowName, transitionName)
-                    LOG.debug("Action ID = ${actionId}")
+                    // get the plate status
+                    String issueStatusName = mutableIssue.getStatus().getName()
+                    LOG.debug "Status name of plate issue = ${issueStatusName}"
 
-                    transitionIssue(mutableIssue, actionId)
+                    LOG.debug "Contents of transition map:"
+                    plateActionParams.statusToTransitionMap.each{ k, v -> LOG.debug "${k}:${v}" }
+
+                    // if the plate status matches a key in the parameter transitions map, transition the plate issue state
+                    if (plateActionParams.statusToTransitionMap.keySet().contains(issueStatusName)) {
+
+                        LOG.debug "Found matching status in transition map"
+                        String transitionName = plateActionParams.statusToTransitionMap.get(issueStatusName)
+
+                        // attempt to get the transition id from the configs
+                        LOG.debug("Attempting to fetch action ID for workflow ${plateActionParams.plateWorkflowName} and transition name $transitionName")
+                        int actionId = ConfigReader.getTransitionActionId(plateActionParams.plateWorkflowName, transitionName)
+                        LOG.debug("Action ID = ${actionId}")
+
+                        if(actionId > 0) {
+                            // attempt to transition the issue
+                            transitionIssue(mutableIssue.getId(), actionId)
+                        } else {
+                            LOG.error "ERROR: unable to execute transition, action Id not found in configs for workflow <${plateActionParams.plateWorkflowName}> and transition <${transitionName}>"
+                        }
+                    }
+                } else {
+                    LOG.error("ERROR: Unexpected issue type <${mutableIssue.getIssueType().getName()}>, expected <${plateActionParams.issueTypeName}>, cannot process plate action.")
                 }
             }
         }
@@ -126,26 +157,21 @@ class WorkflowUtils {
      */
     public static void linkReagentsToGivenIssue(ArrayList<String> listReagentIds, Issue curIssue) {
 
-        LOG.debug "arrayReagentIds = ${listReagentIds.toListString()}".toString()
+        LOG.debug "arrayReagentIds = ${listReagentIds.toListString()}"
         listReagentIds.each { String reagentIdString ->
-            LOG.debug "reagentIdString = ${reagentIdString}".toString()
+            LOG.debug "reagentIdString = ${reagentIdString}"
 
             Long reagentIdLong = Long.parseLong(reagentIdString)
-            LOG.debug "Attempting to link reagent with ID $reagentIdString to issue with ID ${curIssue.id}".toString()
+            LOG.debug "Attempting to link reagent with ID $reagentIdString to issue with ID ${curIssue.id}"
 
             MutableIssue reagentMutableIssue = getMutableIssueForIssueId(reagentIdLong)
 
-            if(reagentMutableIssue != null && reagentMutableIssue.getIssueType().getName() == IssueTypeName.REAGENT_LOT_OR_BATCH.toString()) {
-                LOG.debug "Calling link function in WorkflowUtils to link reagent to issue with ID ${curIssue.id}".toString()
-                try {
-                    createIssueLink(curIssue.getId(), reagentMutableIssue.getId(), IssueLinkTypeName.USES_REAGENT.toString())
-                    LOG.debug "Successfully linked reagent with ID $reagentIdString to issue with ID ${curIssue.id}".toString()
-                } catch (Exception e) {
-                    LOG.error "Failed to link reagent with ID $reagentIdString to issue with ID ${curIssue.id}".toString()
-                    LOG.error e.message
-                }
+            if (reagentMutableIssue != null && reagentMutableIssue.getIssueType().getName() == IssueTypeName.REAGENT_LOT_OR_BATCH.toString()) {
+                LOG.debug "Calling link function in WorkflowUtils to link reagent to issue with ID ${curIssue.id}"
+                createIssueLink(curIssue.getId(), reagentMutableIssue.getId(), IssueLinkTypeName.USES_REAGENT.toString())
+
             } else {
-                LOG.error "Reagent issue null or unexpected issue type when linking reagent with ID ${reagentIdString} to issue with ID ${curIssue.id}".toString()
+                LOG.error "Reagent issue null or unexpected issue type when linking reagent with ID ${reagentIdString} to issue with ID ${curIssue.id}"
             }
         }
     }
@@ -158,11 +184,13 @@ class WorkflowUtils {
      * @return the name of the transition by the given {@Issue} and actionID of the bounded transition variables.
      */
     public static String getTransitionName(Issue issue, Map<String, Object> transitionVars) {
+
         JiraWorkflow workflow = ComponentAccessor.getWorkflowManager().getWorkflow(issue)
         def wfd = workflow.getDescriptor()
         def actionid = transitionVars["actionId"] as Integer
 
         wfd.getAction(actionid).getName()
+
     }
 
     /**
@@ -171,6 +199,7 @@ class WorkflowUtils {
      * @return user
      */
     public static ApplicationUser getLoggedInUser() {
+
         // assumes there is always a logged in user
         JiraAuthenticationContext authContext = ComponentAccessor.getJiraAuthenticationContext()
         ApplicationUser user = authContext.getLoggedInUser()
@@ -181,68 +210,123 @@ class WorkflowUtils {
     /**
      * Transitions an issue through the specified transition action
      *
-     * @param issue the issue to be transitioned
+     * @param issueId the Id of the issue to be transitioned
      * @param actionId the transition action id
      * @return the error collection if the validation or transition fail, otherwise nothing
      */
-    public static void transitionIssue(MutableIssue issue, int actionId) {
+    public static void transitionIssue(Long issueId, int actionId) {
 
-        LOG.debug "Attempting to transition issue with Id <${issue.getId()}> through transition with Id <${actionId}>"
+        LOG.debug "Attempting to transition issue with Id <${issueId}> through transition with Id <${actionId}>"
 
         // set up the transition
         ApplicationUser user = getLoggedInUser()
 
-        WorkflowTransitionUtil wfTransUtil = JiraUtils.loadComponent(WorkflowTransitionUtilImpl.class)
-        wfTransUtil.setIssue(issue)
-        wfTransUtil.setUserkey(user.getKey())
-        wfTransUtil.setAction(actionId)
+        // set up any parameters
+        IssueService issueService = ComponentAccessor.getIssueService()
+        IssueInputParameters issueInputParameters = issueService.newIssueInputParameters()
+        issueInputParameters.setAssigneeId(user.getName())
+        issueInputParameters.setComment("Automatically transitioned by script.")
+        issueInputParameters.setSkipScreenCheck(true)
+//        issueInputParameters.setRetainExistingValuesWhenParameterNotProvided(true, true)
 
         // validate the transition
-        ErrorCollection ecValidate = wfTransUtil.validate()
-        if(ecValidate.hasAnyErrors()) {
-            LOG.error("Validation error transitioning plate issue with ID ${issue.getId()}".toString())
-            // Get all non field-specific error messages
-            Collection<String> stringErrors = ecValidate.getErrorMessages()
-            stringErrors.eachWithIndex { String err, int i ->
-                LOG.error("Error ${i}: ${err}".toString())
+        IssueService.TransitionValidationResult transitionValidationResult
+        transitionValidationResult = issueService.validateTransition(user, issueId, actionId, issueInputParameters)
+        if (transitionValidationResult.isValid()) {
+
+            LOG.debug "Transition of issue with id <${issueId}> via action id <${actionId}> is valid, attempting to transition issue"
+
+            // check for warnings
+            if(transitionValidationResult.getWarningCollection() != null && transitionValidationResult.getWarningCollection().hasAnyWarnings()) {
+                LOG.debug "WARNING: Transition of issue with id <${issueId}> via action id <${actionId}> is valid but had warnings: {}\n", transitionValidationResult.getWarningCollection().toString()
             }
-            return
+
+            // perform the transition
+            IssueService.IssueResult transitionResult = issueService.transition(user, transitionValidationResult)
+
+            // check the transition happened
+            if (transitionResult.isValid()) {
+                // the transition succeeded
+                LOG.debug "Issue with id <${issueId}> has been successfully transitioned via action id <${actionId}>."
+
+                // check for warnings
+                if(transitionResult.getWarningCollection() != null && transitionResult.getWarningCollection().hasAnyWarnings()) {
+                    LOG.warn "WARNING: Issue with id <${issueId}> was transitioned via action id <${actionId}> but there were warnings: {}\n", transitionResult.getWarningCollection().toString()
+                }
+
+            } else {
+                // the transition failed
+                LOG.error("ERROR: Issue with id <${issueId}> has NOT been transitioned via action id <${actionId}>. Result errors: {}\n", transitionValidationResult.getErrorCollection().toString())
+            }
+
+        } else {
+            // the transition was not valid
+            LOG.error("ERROR: Issue with id <${issueId}> has NOT been transitioned via action id <${actionId}>. Validation errors: {}\n", transitionValidationResult.getErrorCollection().toString())
         }
 
-        // perform the transition
-        ErrorCollection ecProgress = wfTransUtil.progress()
-        if(ecProgress.hasAnyErrors()) {
-            LOG.error("Progress error transitioning plate issue with ID ${issue.getId()}".toString())
-            // Get all non field-specific error messages
-            Collection<String> stringErrors = ecProgress.getErrorMessages()
-            stringErrors.eachWithIndex { String err, int i ->
-                LOG.error("Error ${i}: ${err}".toString())
-            }
+    }
+
+    /**
+     * Identify the transition action id and transition the issue
+     *
+     * @param issueId
+     * @param workflowAliasName
+     * @param transitionAliasName
+     */
+    public static void getTransitionActionIdAndTransitionIssue(Long issueId, String workflowAliasName, String transitionAliasName) {
+
+        LOG.debug "Attempting to transition issue with id <${issueId}>, workflow alias name <${workflowAliasName}> through transition alias name <${transitionAliasName}>"
+
+        int transitionActionId = ConfigReader.getTransitionActionId(workflowAliasName, transitionAliasName)
+
+        LOG.debug "Transition action id = ${transitionActionId}"
+
+        if(transitionActionId > 0) {
+            transitionIssue(issueId, transitionActionId)
         } else {
-            LOG.debug "Transition performed successfully"
+            LOG.error "ERROR: Transition action id not found in transition configs, cannot transition issue"
         }
     }
 
     /**
      * Create a reciprocal issue link of the specified link type between two specified issues
      *
-     * @param sourceIssue the issue that is the source of the link
-     * @param destinationIssue the issue that is the destination of the link
-     * @param linkTypeName the name of the issue link type
+     * @param sourceIssueId the issue Id that is the source of the link
+     * @param destinationIssueId the issue Id that is the destination of the link
+     * @param linkTypeName the name of the issue link type (the main name rather than the inward/outward names)
      */
-    public static void createIssueLink(Long sourceId, Long destinationId, String linkTypeName) {
-        // determine the issue link type
-        ComponentManager cManager = ComponentManager.getInstance()
-        IssueLinkTypeManager issLnkTMngr = cManager.getComponentInstanceOfType(IssueLinkTypeManager.class)
-        IssueLinkType issLnkType = (issLnkTMngr.getIssueLinkTypesByName(linkTypeName))[0]
+    public static void createIssueLink(Long sourceIssueId, Long destinationIssueId, String linkTypeName) {
+
+        // get the link type
+        IssueLinkType issueLinkType = getIssueLinkType(linkTypeName)
+
+        if (issueLinkType == null) {
+            LOG.error "ERROR: Failed to link source issue with id <${sourceIssueId}> to destination issue with id <${destinationIssueId}> with link type <${linkTypeName}>"
+            LOG.error "ERROR: issue link type name not recognised <${linkTypeName}>"
+            return
+        }
 
         // determine the user
         ApplicationUser user = getLoggedInUser()
 
         // link the issues together (will create a reciprocal link)
-        IssueLinkManager issLnkMngr = ComponentAccessor.getIssueLinkManager()
+        IssueLinkManager issLinkManager = ComponentAccessor.getIssueLinkManager()
+
+        LOG.debug "Attempting to link two issues:"
+        LOG.debug "Source issue id = ${sourceIssueId}"
+        LOG.debug "Destination issue id = ${destinationIssueId}"
+        LOG.debug "Link name = ${linkTypeName} and id = ${issueLinkType.getId()}"
+
         // throws a CreateException if it fails
-        issLnkMngr.createIssueLink(sourceId, destinationId, issLnkType.id, 1L, user)
+        // (Long sourceIssueId, Long destinationIssueId, Long issueLinkTypeId, Long sequence, ApplicationUser remoteUser)
+        try {
+            issLinkManager.createIssueLink(sourceIssueId, destinationIssueId, issueLinkType.getId(), 1L, user)
+            LOG.debug "Successfully linked source issue to destination issue"
+        } catch (CreateException e) {
+            LOG.error "ERROR: Failed to link source issue with id <${sourceIssueId}> to destination issue with id <${destinationIssueId}> with link type <${linkTypeName}>"
+            LOG.error e.message
+        }
+
     }
 
     /**
@@ -252,20 +336,32 @@ class WorkflowUtils {
      * @param destinationIssue the issue that is the destination of the link
      * @param linkTypeName the name of the issue link type
      */
-    public static void removeIssueLink(Issue sourceIssue, Issue destinationIssue, String linkTypeName) {
-        // determine the issue link type
-        ComponentManager cManager = ComponentManager.getInstance()
-        IssueLinkTypeManager issLnkTMngr = cManager.getComponentInstanceOfType(IssueLinkTypeManager.class)
-        IssueLinkType issLnkType  = (issLnkTMngr.getIssueLinkTypesByName(linkTypeName))[0]
+    public static void removeIssueLink(Long sourceIssueId, Long destinationIssueId, String linkTypeName) {
+
+        // get the link type
+        IssueLinkType issueLinkType = getIssueLinkType(linkTypeName)
+
+        if (issueLinkType == null) {
+            LOG.error "ERROR: Failed to remove link between source issue with id <${sourceIssueId}> to destination issue with id <${destinationIssueId}> with link type <${linkTypeName}>"
+            LOG.error "ERROR: issue link type name not recognised <${linkTypeName}>"
+            return
+        }
 
         // determine the user
         ApplicationUser user = getLoggedInUser()
 
         // remove the link between the plate issue and the submission issue
-        IssueLinkManager issLnkMngr  = ComponentAccessor.getIssueLinkManager()
-        IssueLink issueLink = issLnkMngr.getIssueLink(sourceIssue.id, destinationIssue.id, issLnkType.id)
+        IssueLinkManager issueLinkManager = ComponentAccessor.getIssueLinkManager()
+        IssueLink issueLink = issueLinkManager.getIssueLink(sourceIssueId, destinationIssueId, issueLinkType.id)
+
         // throws IllegalArgumentException if the specified issueLink is null
-        issLnkMngr.removeIssueLink(issueLink, user)
+        try {
+            issueLinkManager.removeIssueLink(issueLink, user)
+        } catch (IllegalArgumentException e) {
+            LOG.error "ERROR: IllegalArgumentException: Failed to remove link between source issue with id <${sourceIssueId}> to destination issue with id <${destinationIssueId}> with link type <${linkTypeName}>"
+            LOG.error e.getMessage()
+        }
+
     }
 
     /**
@@ -274,14 +370,14 @@ class WorkflowUtils {
      * @param linkName
      * @return
      */
-    public static IssueLinkType getIssueLinkType(String linkName) {
+    public static IssueLinkType getIssueLinkType(String linkTypeName) {
 
-        // get the issue link type
-        ComponentManager componentManager = ComponentManager.getInstance()
-        IssueLinkTypeManager issLnkTMngr = componentManager.getComponentInstanceOfType(IssueLinkTypeManager.class)
-        IssueLinkType issueLinkType  = (issLnkTMngr.getIssueLinkTypesByName(linkName))[0]
+        // determine the issue link type
+        IssueLinkTypeManager issueLinkTypeManager = ComponentAccessor.getComponent(IssueLinkTypeManager.class)
+        IssueLinkType issLnkType = issueLinkTypeManager.getIssueLinkTypesByName(linkTypeName).iterator().next()
 
-        issueLinkType
+        issLnkType
+
     }
 
     /**
@@ -291,7 +387,7 @@ class WorkflowUtils {
      * @return list of IssueLinks
      */
     public static List<IssueLink> getInwardLinksListForIssueId(Long issueId) {
-        IssueLinkManager issLnkMngr  = ComponentAccessor.getIssueLinkManager()
+        IssueLinkManager issLnkMngr = ComponentAccessor.getIssueLinkManager()
         List<IssueLink> inwardLinksList = issLnkMngr.getInwardLinks(issueId)
 
         inwardLinksList
@@ -344,7 +440,7 @@ class WorkflowUtils {
     public static Issue getIssueForBarcode(String barcode) {
 
         // check for null or empty barcode
-        if(!barcode?.trim()) {
+        if (!barcode?.trim()) {
             LOG.error "Barcode not present, cannot continue"
             return null
         }
@@ -362,10 +458,10 @@ class WorkflowUtils {
             SearchResults searchResults = searchProvider.search(query, getLoggedInUser(), PagerFilter.getUnlimitedFilter())
             List<Issue> issues = searchResults.getIssues()
 
-            if(1 == issues.size()) {
+            if (1 == issues.size()) {
                 issue = issues[0]
             } else {
-                if(0 == issues.size()) {
+                if (0 == issues.size()) {
                     LOG.error "Barcode <${barcode}> does not match any container in Jira"
                 } else {
                     LOG.error "Barcode <${barcode}> returns more than one issue"
@@ -377,6 +473,7 @@ class WorkflowUtils {
             LOG.error e.printStackTrace()
         }
         issue
+
     }
 
     /**
@@ -391,19 +488,19 @@ class WorkflowUtils {
 
         LOG.debug "Attempting to fetch custom field with alias name ${cfAlias}".toString()
         def customFieldManager = ComponentAccessor.getCustomFieldManager()
-        def customField =  customFieldManager.getCustomFieldObject(ConfigReader.getCFId(cfAlias))
+        def customField = customFieldManager.getCustomFieldObject(ConfigReader.getCFId(cfAlias))
 
         ArrayList<String> ids = []
 
-        if(customField != null) {
+        if (customField != null) {
             // the value of the nFeed field varies depending on if deprecated or current type
             // the deprecated type returns a list of long issue ids
             // the current type returns an XML with structure <content><value>12345</value>...</content>
             String nFeedValueAsString = curIssue.getCustomFieldValue(customField)
             LOG.debug "nFeed field return value = ${nFeedValueAsString}"
 
-            if(nFeedValueAsString?.trim()) {
-                if(nFeedValueAsString.startsWith('<')) {
+            if (nFeedValueAsString?.trim()) {
+                if (nFeedValueAsString.startsWith('<')) {
                     LOG.debug "nFeed field is returning XML, parsing to get ids"
                     GPathResult xmlContent = new XmlSlurper().parseText(nFeedValueAsString)
                     xmlContent.value.each { node ->
@@ -411,13 +508,13 @@ class WorkflowUtils {
                         LOG.debug "Found node text: ${id}".toString()
                         ids.add(id)
                     }
-                } else if(nFeedValueAsString.startsWith('[')) {
+                } else if (nFeedValueAsString.startsWith('[')) {
                     LOG.debug "nFeed field is returning array of ids, parsing to get ids"
                     String[] arrayIds = curIssue.getCustomFieldValue(customField)
                     arrayIds.each { String idString ->
                         ids.add(idString)
                     }
-                } else if(nFeedValueAsString ==~ /\d+/) {
+                } else if (nFeedValueAsString ==~ /\d+/) {
                     LOG.debug "nFeed field is returning single id"
                     ids.add(nFeedValueAsString)
                 } else {
@@ -434,4 +531,94 @@ class WorkflowUtils {
         LOG.debug "Returning ids : ${ids.toString()}".toString()
         ids
     }
+
+    /**
+     * Get a list of any container issues linked to the input group issue
+     *
+     * @param groupIssue - the group issue with linked containers
+     * @return a list of container issues
+     */
+    public static List<Issue> getContainersLinkedToGroup(Issue groupIssue) {
+
+        LOG.debug "Getting containers linked to the group issue with Id = <${groupIssue.getId().toString()}> and Key = <${groupIssue.getKey()}>"
+
+        // group to plate link type
+        IssueLinkType groupToContainerLinkType = getIssueLinkType(IssueLinkTypeName.GROUP_INCLUDES.toString())
+
+        // get the outward linked issues from the group issue
+        List<IssueLink> outwardLinksListQNTA = getOutwardLinksListForIssueId(groupIssue.getId())
+
+        LOG.debug "Found <${outwardLinksListQNTA.size()}> issues linked to the group issue"
+
+        List<Issue> contIssueList = []
+
+        // check for linked containers
+        outwardLinksListQNTA.each { IssueLink outwardIssueLink ->
+
+            Issue curLinkedIssue = outwardIssueLink.getDestinationObject()
+
+            if (outwardIssueLink.getIssueLinkType() == groupToContainerLinkType) {
+                LOG.debug "Found linked container issue:"
+                LOG.debug "Issue type = <${curLinkedIssue.getIssueType().getName()}>"
+                LOG.debug "Status = <${curLinkedIssue.getStatus().getName()}>"
+                LOG.debug "Id = <${curLinkedIssue.getId().toString()}>"
+                LOG.debug "Key = <${curLinkedIssue.getKey()}>"
+                LOG.debug "Summary = <${curLinkedIssue.getSummary()}>"
+
+                contIssueList.add(curLinkedIssue)
+            }
+        }
+        contIssueList
+
+    }
+
+    /**
+     * Get a list of any parent container issues linked to the input container issue
+     *
+     * @param sourceContainerIssue - the source container issue with parent container issues
+     * @return a list of container issues
+     */
+    public static List<Issue> getContainerParentContainers(Issue sourceContainerIssue) {
+
+        LOG.debug "Getting parent containers linked to the source container issue with Id = <${sourceContainerIssue.getId().toString()}> and Key = <${sourceContainerIssue.getKey()}>"
+
+        // plate to plate link type
+        IssueLinkType containerToContainerLinkType = getIssueLinkType(IssueLinkTypeName.RELATIONSHIPS.toString())
+
+        // determine the ancestors of the source issue
+        List<IssueLink> inwardsLinksList = getInwardLinksListForIssueId(sourceContainerIssue.getId())
+
+        LOG.debug "Found <${inwardsLinksList.size()}> issues linked to the source container issue"
+
+        List<Issue> contIssueList = []
+
+        // check for linked containers
+        inwardsLinksList.each { IssueLink issLink ->
+
+            // get the source of the link, i.e. the ancestor (or parent) issue
+            Issue curLinkedIssue = issLink.getSourceObject()
+            LOG.debug "Ancestor issue link type name = ${issLink.getIssueLinkType().getName()}"
+
+            // we only want linked containers, not other types of issues
+            if (issLink.getIssueLinkType() == containerToContainerLinkType) {
+
+                LOG.debug "Found parent container issue:"
+                LOG.debug "Issue type = <${curLinkedIssue.getIssueType().getName()}>"
+                LOG.debug "Status = <${curLinkedIssue.getStatus().getName()}>"
+                LOG.debug "Id = <${curLinkedIssue.getId().toString()}>"
+                LOG.debug "Key = <${curLinkedIssue.getKey()}>"
+                LOG.debug "Summary = <${curLinkedIssue.getSummary()}>"
+
+                contIssueList.add(curLinkedIssue)
+            }
+        }
+        contIssueList
+
+    }
+
+    // TODO: method to get child container issues
+//    public static List<Issue> getContainerChildContainers(Issue sourceContainerIssue) {
+//
+//    }
+
 }

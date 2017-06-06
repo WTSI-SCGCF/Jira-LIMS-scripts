@@ -39,9 +39,9 @@ class SmartSeq2PostFunctions {
             MutableIssue mutableIssue = WorkflowUtils.getMutableIssueForIssueId(plateIdLong)
 
             if(mutableIssue != null && mutableIssue.getIssueType().getName() == issueTypeName.toString()) {
-                // transition the issue to 'In Submission' if it is 'Rdy for Submission'
+                // transition the issue
                 if(mutableIssue.getStatus().getName() == fromIssueStatusName.toString()) {
-                    WorkflowUtils.transitionIssue(mutableIssue, actionId)
+                    WorkflowUtils.transitionIssue(plateIdLong, actionId)
                 }
             }
         }

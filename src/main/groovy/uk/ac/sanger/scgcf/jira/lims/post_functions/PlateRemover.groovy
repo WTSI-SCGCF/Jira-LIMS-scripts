@@ -2,6 +2,7 @@ package uk.ac.sanger.scgcf.jira.lims.post_functions
 
 import com.atlassian.jira.issue.Issue
 import groovy.util.logging.Slf4j
+import uk.ac.sanger.scgcf.jira.lims.enums.IssueTypeName
 import uk.ac.sanger.scgcf.jira.lims.enums.WorkflowName
 import uk.ac.sanger.scgcf.jira.lims.utils.PlateActionParameterHolder
 import uk.ac.sanger.scgcf.jira.lims.utils.PlateRemoverParametersCreator
@@ -29,14 +30,17 @@ class PlateRemover extends BaseIssueAction {
         initPlateRemovalParameterHolders()
     }
 
+    /**
+     * Removes the selected plates from the current group issue.
+     */
     public void execute() {
         validateParameters()
 
-        LOG.debug "Post-function for removing plates from a $issueTypeName workflow".toString()
+        LOG.debug "Post-function for removing plates with issue type <${issueTypeName}> from the group issue with Key <${curIssue.getKey()}>"
 
         selectedIssueIds = WorkflowUtils.getIssueIdsFromNFeedField(curIssue, customFieldName)
 
-        //if user hasn't selected anything do nothing further
+        // if user hasn't selected anything do nothing further
         if (selectedIssueIds == null) {
             LOG.debug("No items selected, nothing to do")
             return
@@ -47,19 +51,24 @@ class PlateRemover extends BaseIssueAction {
         PlateActionParameterHolder parameters = plateActionParameterHolders.get(issueTypeName)
         parameters.plateIds = selectedIssueIds
 
-        // unlink and revert the plate issue(s)
+        // de-link and transition the plates
         WorkflowUtils.removePlatesFromGivenGrouping(parameters, fieldNamesToClear)
     }
 
+    /**
+     * Initialise the plate action parameter holders map.
+     *
+     * N.B. key is the issue type name of the GROUP issue.
+     */
     private void initPlateRemovalParameterHolders() {
         plateActionParameterHolders = new HashMap<>()
-        plateActionParameterHolders.put(WorkflowName.SMART_SEQ2.toString(),
+        plateActionParameterHolders.put(IssueTypeName.SMART_SEQ2.toString(),
                 PlateRemoverParametersCreator.getSmartSeq2Parameters(curIssue))
-        plateActionParameterHolders.put(WorkflowName.IMD.toString(),
+        plateActionParameterHolders.put(IssueTypeName.IMPORT_DECLARATION.toString(),
                 PlateRemoverParametersCreator.getIMDParameters(curIssue))
-        plateActionParameterHolders.put(WorkflowName.SUBMISSION.toString(),
+        plateActionParameterHolders.put(IssueTypeName.SUBMISSION.toString(),
                 PlateRemoverParametersCreator.getSubmissionParameters(curIssue))
-        plateActionParameterHolders.put(WorkflowName.SAMPLE_RECEIPT.toString(),
+        plateActionParameterHolders.put(IssueTypeName.SAMPLE_RECEIPT.toString(),
                 PlateRemoverParametersCreator.getSampleReceiptsParameters(curIssue))
     }
 }

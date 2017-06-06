@@ -1,24 +1,17 @@
 package uk.ac.sanger.scgcf.jira.lims.scripts.post_functions.spriplatecleanup
 
-import com.atlassian.jira.component.ComponentAccessor
 import com.atlassian.jira.issue.Issue
 import groovy.transform.Field
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
 import uk.ac.sanger.scgcf.jira.lims.post_functions.SPRiPlateCleanupPostFunctions
 import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
-
-/**
- * Created by as28 on 11/05/2017.
- */
 
 /**
  * Processes a plate that has failed SPRi.
  *
  * Created by as28 on 11/05/2017.
  */
-
 
 // create logging class
 @Field private final Logger LOG = LoggerFactory.getLogger(getClass())

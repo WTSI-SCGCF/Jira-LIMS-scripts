@@ -16,6 +16,6 @@ Issue curIssue = issue
  */
 
 List<String> fieldNamesToClear = ["Num Cycles cDNA PCR", "Pre-Amp Protocol", "Post-Amp Protocol"]
-PlateRemover plateRemover = new PlateRemover(curIssue, WorkflowName.SUBMISSION.toString(),
+PlateRemover plateRemover = new PlateRemover(curIssue, WorkflowName.SUBMISSIONS.toString(),
         "REMOVE_PLATES_FROM_SUBMISSION_IN_PROGRESS", fieldNamesToClear)
 plateRemover.execute()

@@ -60,7 +60,7 @@ class SampleReceiptPostFunctions {
         List<IssueLink> outwardLinksList = WorkflowUtils.getOutwardLinksListForIssueId(sampleReceiptIssue.getId())
 
         // get the transition action id
-        int actionId = ConfigReader.getTransitionActionId(
+        int transitionActionId = ConfigReader.getTransitionActionId(
                 WorkflowName.PLATE_SS2.toString(), TransitionName.SS2_START_SUBMISSION.toString())
 
         // for each issue linked to the sample receipt
@@ -68,15 +68,14 @@ class SampleReceiptPostFunctions {
             Issue linkedIssue = issLink.getDestinationObject()
 
             // only check links in plates
-            if (linkedIssue.getIssueType().name == IssueTypeName.PLATE_SS2.toString()
-                    && issLink.getIssueLinkType() == plateLinkType) {
+            if (linkedIssue.getIssueType().name == IssueTypeName.PLATE_SS2.toString() && issLink.getIssueLinkType() == plateLinkType) {
                 if (checkForSubmissionLink(linkedIssue.getId())) {
+
                     LOG.debug("Transitioning linked plate with Id ${linkedIssue.getId()} and summary ${linkedIssue.getSummary()}".toString())
-                    MutableIssue mutableIssue = WorkflowUtils.getMutableIssueForIssueId(linkedIssue.getId())
-                    if (mutableIssue != null && mutableIssue.getIssueType().getName() == IssueTypeName.PLATE_SS2.toString()
-                            && mutableIssue.getStatus().getName() == IssueStatusName.PLTSS2_RDY_FOR_SUBMISSION.toString()) {
+                    if (linkedIssue.getStatus().getName() == IssueStatusName.PLTSS2_RDY_FOR_SUBMISSION.toString()) {
+
                         // transition the issue to In Submission
-                        WorkflowUtils.transitionIssue(mutableIssue, actionId)
+                        WorkflowUtils.transitionIssue(linkedIssue.getId(), transitionActionId)
                     }
                 }
             }

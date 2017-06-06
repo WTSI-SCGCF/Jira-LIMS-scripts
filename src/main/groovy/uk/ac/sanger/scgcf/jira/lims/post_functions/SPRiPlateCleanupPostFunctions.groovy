@@ -94,33 +94,29 @@ class SPRiPlateCleanupPostFunctions {
                     LOG.debug "Source action id = ${sourceActionId}"
 
                     if(sourceActionId > 0) {
-                        // transition source to 'Done' ('Completed SPRi')
-                        WorkflowUtils.transitionIssue(curSourceMutIssue, sourceActionId)
+                        LOG.debug "Attempting to transition source to 'Done' (resolution 'Completed SPRi')"
+                        WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId)
                     } else {
-                        LOG.error "Source action id not found, cannot transition source for ID ${sourcePlateId}"
+                        LOG.error "ERROR: Source action id not found, cannot transition source for ID ${sourcePlateId}"
                     }
 
                     if(destActionId > 0) {
-                        // transition destination to 'Rdy for Quant'
-                        WorkflowUtils.transitionIssue(curDestMutIssue, destActionId)
+                        LOG.debug "Attempting to transition destination to 'Rdy for Quant'"
+                        WorkflowUtils.transitionIssue(curDestMutIssue.getId(), destActionId)
                     } else {
-                        LOG.error "Destination action id not found, cannot transition destination with barcode ${curDestBarcode}"
+                        LOG.error "ERROR: Destination action id not found, cannot transition destination with barcode ${curDestBarcode}"
                     }
 
                     // link the source plate to the destination issue via 'is a parent of' linking
-                    try {
-                        WorkflowUtils.createIssueLink(curSourceMutIssue.getId(), curDestMutIssue.getId(), IssueLinkTypeName.RELATIONSHIPS.getLinkTypeName())
-                    } catch(CreateException ex) {
-                        LOG.error "Failed to create a link between the source <${curSourceBarcode}> and destination <${curDestBarcode}>"
-                        LOG.error ex.printStackTrace()
-                    }
+                    LOG.debug "Attempting to create an issue link between the source and destination plates"
+                    WorkflowUtils.createIssueLink(curSourceMutIssue.getId(), curDestMutIssue.getId(), IssueLinkTypeName.RELATIONSHIPS.getLinkTypeName())
 
                 } else {
-                    LOG.error "No destination barcode for source barcode ${curSourceBarcode}"
+                    LOG.error "ERROR: No destination barcode for source barcode ${curSourceBarcode}"
                 }
 
             } else {
-                LOG.error "No source issue found for id ${sourcePlateId}"
+                LOG.error "ERROR: No source issue found for id ${sourcePlateId}"
             }
         }
     }
@@ -188,7 +184,7 @@ class SPRiPlateCleanupPostFunctions {
                 if(sourceActionId > 0) {
                     // transition source plate issue
                     // to either 'Failed' (resolution 'Failed in SPRi') for CMB, or to 'In SPRi Feedback' for SS2 or DNA
-                    WorkflowUtils.transitionIssue(curSourceMutIssue, sourceActionId)
+                    WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId)
 
                     // set SPRi feedback on source plate issue (re-fetch issue first)
                     curSourceMutIssue = WorkflowUtils.getMutableIssueForIssueId(sourcePlateIdLong)
@@ -204,7 +200,7 @@ class SPRiPlateCleanupPostFunctions {
 
                 if(destActionId > 0) {
                     // transition destination to 'Failed' (resolution 'Failed in SPRi')
-                    WorkflowUtils.transitionIssue(curDestMutIssue, destActionId)
+                    WorkflowUtils.transitionIssue(curDestMutIssue.getId(), destActionId)
                 } else {
                     LOG.error "Destination action id not found, cannot transition destination with barcode ${curDestBarcode}"
                 }
@@ -301,9 +297,8 @@ class SPRiPlateCleanupPostFunctions {
 
                 if(destActionId > 0) {
                     LOG.debug "Ancestor transition action Id = ${destActionId}"
-                    // transition ancestor plate according to whether empty or not
-                    MutableIssue curAncestorPlateMutIssue = WorkflowUtils.getMutableIssueForIssueId(curAncestorIssue.getId())
-                    WorkflowUtils.transitionIssue(curAncestorPlateMutIssue, destActionId)
+                    // transition ancestor plate
+                    WorkflowUtils.transitionIssue(curAncestorIssue.getId(), destActionId)
                 } else {
                     LOG.error "Ancestor transition action Id not found, cannot transition ancestor plate with barcode ${curBarcode}"
                 }

@@ -13,5 +13,5 @@ import uk.ac.sanger.scgcf.jira.lims.post_functions.PlateRemover
  */
 Issue curIssue = issue
 
-PlateRemover plateRemover = new PlateRemover(curIssue, WorkflowName.IMD.toString(), "GENERIC_REMOVE_PLATES")
+PlateRemover plateRemover = new PlateRemover(curIssue, WorkflowName.IMPORT_DECLARATIONS.toString(), "GENERIC_REMOVE_PLATES")
 plateRemover.execute()

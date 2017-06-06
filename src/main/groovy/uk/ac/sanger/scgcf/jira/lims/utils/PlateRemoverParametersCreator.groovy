@@ -26,7 +26,7 @@ class PlateRemoverParametersCreator {
     public static PlateActionParameterHolder getSmartSeq2Parameters(Issue curIssue) {
         PlateActionParameterHolder plateActionParams = getBasicPlateRemovalParameterHolder(curIssue)
         plateActionParams.plateWorkflowName = WorkflowName.PLATE_SS2
-        plateActionParams.currentWorkflowName = WorkflowName.SMART_SEQ2
+        plateActionParams.currentWorkflowName = WorkflowName.PRE_AMP_SMART_SEQ2
         plateActionParams.statusToTransitionMap.put(
                 SS2PlateStateName.PLATESS2_IN_SS2.toString(), TransitionName.SS2_REVERT_TO_READY_FOR_SS2.toString())
         plateActionParams.linkTypeName = IssueLinkTypeName.GROUP_INCLUDES
@@ -45,7 +45,7 @@ class PlateRemoverParametersCreator {
     public static PlateActionParameterHolder getIMDParameters(Issue curIssue) {
         PlateActionParameterHolder plateActionParams = getBasicPlateRemovalParameterHolder(curIssue)
         plateActionParams.plateWorkflowName = WorkflowName.PLATE_SS2
-        plateActionParams.currentWorkflowName = WorkflowName.IMD
+        plateActionParams.currentWorkflowName = WorkflowName.IMPORT_DECLARATIONS
         plateActionParams.statusToTransitionMap.put(
                 SS2PlateStateName.PLATESS2_IN_IMD.toString(), TransitionName.SS2_REVERT_TO_WITH_CUSTOMER.toString())
         plateActionParams.linkTypeName = IssueLinkTypeName.GROUP_INCLUDES
@@ -64,7 +64,7 @@ class PlateRemoverParametersCreator {
     public static PlateActionParameterHolder getSubmissionParameters(Issue curIssue) {
         PlateActionParameterHolder plateActionParams = getBasicPlateRemovalParameterHolder(curIssue)
         plateActionParams.plateWorkflowName = WorkflowName.PLATE_SS2
-        plateActionParams.currentWorkflowName = WorkflowName.SUBMISSION
+        plateActionParams.currentWorkflowName = WorkflowName.SUBMISSIONS
 
         plateActionParams.statusToTransitionMap.put(
                 SS2PlateStateName.PLATESS2_IN_SUBMISSION.toString(), TransitionName.SS2_REVERT_TO_READY_FOR_SUBMISSION.toString())
@@ -93,7 +93,7 @@ class PlateRemoverParametersCreator {
     public static PlateActionParameterHolder getSampleReceiptsParameters(Issue curIssue) {
         PlateActionParameterHolder plateActionParams = getBasicPlateRemovalParameterHolder(curIssue)
         plateActionParams.plateWorkflowName = WorkflowName.PLATE_SS2
-        plateActionParams.currentWorkflowName = WorkflowName.SAMPLE_RECEIPT
+        plateActionParams.currentWorkflowName = WorkflowName.SAMPLE_RECEIPTS
         plateActionParams.statusToTransitionMap.put(
                 SS2PlateStateName.PLATESS2_IN_RECEIVING.toString(), TransitionName.SS2_REVERT_TO_READY_FOR_RECEIVING.toString())
         plateActionParams.linkTypeName = IssueLinkTypeName.GROUP_INCLUDES

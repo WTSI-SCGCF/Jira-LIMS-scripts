@@ -51,19 +51,26 @@ class JiraAPIWrapper {
     }
 
     /**
-     * Get the value of a specified custom field for an issue
+     * Get the value of a specified custom field name for an issue
+     * N.B. accepts the real name not an alias
      *
      * @param curIssue
      * @param cfName
      * @return String value of custom field
+     * TODO: make wrapper method for this method that takes the alias name for CF
      * TODO: split out to handle custom fields other than simple strings
-     * TODO: handle various exceptions and fail silently
+     * TODO: handle various exceptions and fail silently e.g. if cfName not recognised get null pointer
      */
     static String getCFValueByName(Issue curIssue, String cfName) {
-        LOG.debug "Get custom field value for name: ${cfName}"
-        String cfValue = curIssue.getCustomFieldValue(getCustomFieldByName(cfName)) as String
-        LOG.debug("CF value: ${cfValue}")
-        cfValue
+        LOG.debug "Attempting to get custom field value for issue with Id = <${curIssue.getId().toString()}> and cfname: ${cfName}"
+        CustomField cf = getCustomFieldByName(cfName)
+        if(cf != null) {
+            String cfValue = curIssue.getCustomFieldValue(getCustomFieldByName(cfName)) as String
+            LOG.debug("Retrieved custom field value: ${cfValue}")
+            cfValue
+        } else {
+            LOG.error "Custom field null for issue with Id = <${curIssue.getId().toString()}> and cfname = <${cfName}>, cannot return value"
+        }
     }
 
 //    /**

@@ -1,7 +1,7 @@
 package uk.ac.sanger.scgcf.jira.lims.enums
 
 /**
- * Enumerated list for the name of SS2 plate's state name.
+ * Enumerated list holding SS2 plate state names.
  *
  * Created by ke4 on 25/01/2017.
  */

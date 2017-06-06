@@ -1,7 +1,7 @@
 package uk.ac.sanger.scgcf.jira.lims.scripts.post_functions.importdeclarations
 
 import com.atlassian.jira.issue.Issue
-import uk.ac.sanger.scgcf.jira.lims.enums.WorkflowName
+import uk.ac.sanger.scgcf.jira.lims.enums.IssueTypeName
 import uk.ac.sanger.scgcf.jira.lims.post_functions.PlateAdder
 
 /**
@@ -14,5 +14,5 @@ import uk.ac.sanger.scgcf.jira.lims.post_functions.PlateAdder
 
 Issue curIssue = issue
 
-PlateAdder plateAdder = new PlateAdder(curIssue, WorkflowName.IMD.toString(), "ADD_PLATES_TO_IMPORT_DECLARATION")
+PlateAdder plateAdder = new PlateAdder(curIssue, IssueTypeName.IMPORT_DECLARATION.toString(), "ADD_PLATES_TO_IMPORT_DECLARATION")
 plateAdder.execute()

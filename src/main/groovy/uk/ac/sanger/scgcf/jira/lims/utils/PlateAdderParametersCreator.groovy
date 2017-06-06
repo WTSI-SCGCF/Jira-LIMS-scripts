@@ -1,6 +1,7 @@
 package uk.ac.sanger.scgcf.jira.lims.utils
 
 import com.atlassian.jira.issue.Issue
+import uk.ac.sanger.scgcf.jira.lims.enums.ECHPlateStateName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueLinkTypeName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueTypeName
 import uk.ac.sanger.scgcf.jira.lims.enums.SS2PlateStateName
@@ -16,6 +17,19 @@ import uk.ac.sanger.scgcf.jira.lims.enums.WorkflowName
 class PlateAdderParametersCreator {
 
     /**
+     * Common plate action parameter setup
+     *
+     * @param curIssue
+     * @return
+     */
+    private static PlateActionParameterHolder getBasicPlateActionParameterHolder(Issue curIssue) {
+        PlateActionParameterHolder plateActionParams = new PlateActionParameterHolder()
+        plateActionParams.currentIssue = curIssue
+
+        plateActionParams
+    }
+
+    /**
      * Creates a {@code PlateActionParameterHolder} for adding a plate to the IMD workflow
      *
      * @param curIssue the specific issue
@@ -24,7 +38,7 @@ class PlateAdderParametersCreator {
      */
     public static PlateActionParameterHolder getIMDParameters(Issue curIssue) {
         PlateActionParameterHolder plateActionParams = getBasicPlateActionParameterHolder(curIssue)
-        plateActionParams.currentWorkflowName = WorkflowName.IMD
+        plateActionParams.currentWorkflowName = WorkflowName.IMPORT_DECLARATIONS
         plateActionParams.statusToTransitionMap.put(
                 SS2PlateStateName.PLATESS2_WITH_CUSTOMER.toString(), TransitionName.SS2_START_IMPORT_DECLARATION.toString())
         plateActionParams.linkTypeName = IssueLinkTypeName.GROUP_INCLUDES
@@ -45,7 +59,7 @@ class PlateAdderParametersCreator {
      */
     public static PlateActionParameterHolder getSubmissionParameters(Issue curIssue) {
         PlateActionParameterHolder plateActionParams = getBasicPlateActionParameterHolder(curIssue)
-        plateActionParams.currentWorkflowName = WorkflowName.SUBMISSION
+        plateActionParams.currentWorkflowName = WorkflowName.SUBMISSIONS
         plateActionParams.statusToTransitionMap.put(
                 SS2PlateStateName.PLATESS2_RDY_FOR_SUBMISSION.toString(), TransitionName.SS2_START_SUBMISSION.toString())
         plateActionParams.linkTypeName = IssueLinkTypeName.GROUP_INCLUDES
@@ -57,10 +71,24 @@ class PlateAdderParametersCreator {
         plateActionParams
     }
 
-    private static PlateActionParameterHolder getBasicPlateActionParameterHolder(Issue curIssue) {
-        PlateActionParameterHolder plateActionParams = new PlateActionParameterHolder()
-        plateActionParams.currentIssue = curIssue
+    /**
+     * Creates a {@code PlateActionParameterHolder} for adding a plate to the Quantification Analysis workflow
+     *
+     * @param curIssue the specific issue
+     * @return PlateActionParameterHolder object holding all the parameters needed for adding a plate to the
+     * Quantification Analysis workflow
+     */
+    public static PlateActionParameterHolder getQNTAParameters(Issue curIssue) {
+        PlateActionParameterHolder plateActionParams = getBasicPlateActionParameterHolder(curIssue)
+        plateActionParams.currentWorkflowName = WorkflowName.DNA_QUANTIFICATION_ANALYSIS
+        plateActionParams.statusToTransitionMap.put(
+                ECHPlateStateName.PLTECH_RDY_FOR_QUANT_ANALYSIS.toString(), TransitionName.ECH_START_QUANTIFICATION_ANALYSIS.toString()
+        )
+        plateActionParams.linkTypeName = IssueLinkTypeName.GROUP_INCLUDES
+        plateActionParams.issueTypeName = IssueTypeName.PLATE_ECH
+        plateActionParams.plateWorkflowName = WorkflowName.PLATE_ECH
 
         plateActionParams
     }
+
 }
