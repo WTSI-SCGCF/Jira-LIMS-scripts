@@ -24,8 +24,11 @@ import com.atlassian.query.Query
 import groovy.util.logging.Slf4j
 import groovy.util.slurpersupport.GPathResult
 import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
+import uk.ac.sanger.scgcf.jira.lims.enums.BarcodeInfos
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueLinkTypeName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueTypeName
+import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.LabelTemplates
+import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.PrintLabelAction
 import uk.ac.sanger.scgcf.jira.lims.service_wrappers.JiraAPIWrapper
 
 /**
@@ -387,8 +390,10 @@ class WorkflowUtils {
      * @return list of IssueLinks
      */
     public static List<IssueLink> getInwardLinksListForIssueId(Long issueId) {
+        LOG.debug "Fetching Inward links for issue with Id <${issueId.toString()}>"
         IssueLinkManager issLnkMngr = ComponentAccessor.getIssueLinkManager()
         List<IssueLink> inwardLinksList = issLnkMngr.getInwardLinks(issueId)
+        LOG.debug "Found <${inwardLinksList.size()}> inwards links"
 
         inwardLinksList
     }
@@ -400,8 +405,10 @@ class WorkflowUtils {
      * @return list of IssueLinks
      */
     public static List<IssueLink> getOutwardLinksListForIssueId(Long issueId) {
+        LOG.debug "Fetching Outward links for issue with Id <${issueId.toString()}>"
         IssueLinkManager issLnkMngr = ComponentAccessor.getIssueLinkManager()
         List<IssueLink> outwardLinksList = issLnkMngr.getOutwardLinks(issueId)
+        LOG.debug "Found <${outwardLinksList.size()}> outwards links"
 
         outwardLinksList
     }
@@ -620,5 +627,33 @@ class WorkflowUtils {
 //    public static List<Issue> getContainerChildContainers(Issue sourceContainerIssue) {
 //
 //    }
+
+    /**
+     * Print plate labels from the specified printer for the given number of plates with the supplied info type
+     *
+     * @param sourceIssue
+     * @param bcInfoType
+     */
+    public static void printPlateLabels(Issue sourceIssue, String bcInfoType) {
+
+        String printerName = JiraAPIWrapper.getCFValueByName(sourceIssue, ConfigReader.getCFName("PRINTER_FOR_PLATE_LABELS"))
+        int numberOfLabels
+        try {
+            numberOfLabels = Double.valueOf(JiraAPIWrapper.getCFValueByName(sourceIssue, ConfigReader.getCFName("NUMBER_OF_PLATES"))).intValue()
+        } catch (NumberFormatException e) {
+            LOG.error "Number format exception, cannot determine number of plates"
+            numberOfLabels = 1
+        }
+
+        def labelTemplate = LabelTemplates.LABEL_STANDARD_6MM_PLATE
+        def labelData = [:]
+
+        LOG.debug "Attempting to print <${numberOfLabels.toString()}> type <${bcInfoType}> barcode labels from printer <${printerName}>"
+
+        PrintLabelAction printLabelAction =
+                new PrintLabelAction(printerName, numberOfLabels, labelTemplate, labelData, bcInfoType)
+        printLabelAction.execute()
+
+    }
 
 }

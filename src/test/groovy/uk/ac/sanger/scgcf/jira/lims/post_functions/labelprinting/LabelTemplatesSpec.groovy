@@ -1,7 +1,7 @@
 package uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting
 
 import spock.lang.Specification
-import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates.SS2LysisBufferLabelJsonCreator
+import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates.StandardPlateLabelJsonCreator
 
 /**
  * Tests for {@code LabelTemplates}
@@ -20,14 +20,14 @@ class LabelTemplatesSpec extends Specification {
         def labelJsonCreator = ss2LysisBufferTemplate.getInstance(args)
 
         expect:
-        labelJsonCreator instanceof SS2LysisBufferLabelJsonCreator
+        labelJsonCreator instanceof StandardPlateLabelJsonCreator
     }
 
     def "Instantiating a label template can return its proper type as a String"() {
 
         setup:
         LabelTemplates ss2LysisBufferTemplate = LabelTemplates.LABEL_STANDARD_6MM_PLATE
-        String expectedType = "SS2 Lysis Buffer"
+        String expectedType = "Standard Plate Label"
 
         expect:
         ss2LysisBufferTemplate.getType() == expectedType

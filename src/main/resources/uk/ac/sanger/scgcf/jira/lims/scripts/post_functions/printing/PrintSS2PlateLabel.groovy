@@ -13,8 +13,6 @@ import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
  * Created by as28 on 15/06/2017.
  */
 
-//TODO: delete this when workflows are changed to use specific scripts
-
 @Field private final Logger LOG = LoggerFactory.getLogger(getClass())
 
 Issue curIssue = issue

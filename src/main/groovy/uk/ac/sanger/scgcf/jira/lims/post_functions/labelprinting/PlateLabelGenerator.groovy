@@ -22,6 +22,7 @@ class PlateLabelGenerator {
     String barcodePrefix
     String barcodeInfo
     def labelData
+    String bcInfoType
     List<String> barcodes = new ArrayList<>()
     BarcodeGenerator barcodeGenerator
 
@@ -32,12 +33,14 @@ class PlateLabelGenerator {
      * @param numberOfLabels the number of label to print
      * @param labelTemplate the template to use to print the label(s)
      * @param labelData contains the data to print on the label
+     * @param bcInfoType contains the type of barcode info e.g SS2
      */
-    PlateLabelGenerator(String printerName, int numberOfLabels, LabelTemplates labelTemplate, def labelData) {
+    PlateLabelGenerator(String printerName, int numberOfLabels, LabelTemplates labelTemplate, def labelData, String bcInfoType) {
         this.printerName = printerName
         this.numberOfLabels = numberOfLabels
         this.labelTemplate = labelTemplate
         this.labelData = labelData
+        this.bcInfoType = bcInfoType
 
         barcodeGenerator = new BarcodeGenerator()
 
@@ -46,8 +49,8 @@ class PlateLabelGenerator {
 
     /**
      * Creates the label to print.
-     * Generates the given number of barcodes (the number of the plates). It iterates throught
-     * the generated barcodes and creates a label using them, then it returns the
+     * Generates the given number of barcodes (the number of the plates). It iterates through
+     * the generated barcodes and creates a label for them, then it returns the
      * assembled labels ready to print with the given label printer.
      *
      * @return assembled JSON ready for printing with the selected label printer.
@@ -79,6 +82,7 @@ class PlateLabelGenerator {
 
     private initBarcodeProperties() {
         Map<String, String> labelTemplateDetails = (Map<String, String>) ConfigReader.getLabeltemplateDetails(LabelTemplates.LABEL_STANDARD_6MM_PLATE)
+        Map<String, String> bcInfoDetails = (Map<String, String>) ConfigReader.getBarcodeInfoDetails(bcInfoType)
 
         def labelTemplateId = labelTemplateDetails.id
 
@@ -96,7 +100,7 @@ class PlateLabelGenerator {
 
         Map<String, String> printMyBarcodeDetails = (Map<String, String>) ConfigReader.getServiceDetails(JiraLimsServices.PRINT_MY_BARCODE)
         barcodePrefix = printMyBarcodeDetails["barcodePrefix"]
-        barcodeInfo = labelTemplateDetails["barcodeInfo"]
+        barcodeInfo = bcInfoDetails["info"]
 
         plateLabelJsonCreators = new HashMap<>()
         plateLabelJsonCreators.put(LabelTemplates.LABEL_STANDARD_6MM_PLATE.type, LabelTemplates.LABEL_STANDARD_6MM_PLATE)

@@ -6,9 +6,9 @@ package uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates
  *
  * Created by ke4 on 16/03/2017.
  */
-class LibraryPoolTubeLabelJsonCreator implements LabelJsonCreator {
+class StandardTubeLabelJsonCreator implements LabelJsonCreator {
 
-    LibraryPoolTubeLabelJsonCreator(def labelData) {
+    StandardTubeLabelJsonCreator(def labelData) {
         // @TODO add some initializing code
     }
 

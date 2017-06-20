@@ -2,6 +2,7 @@ package uk.ac.sanger.scgcf.jira.lims.configurations
 
 import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
+import uk.ac.sanger.scgcf.jira.lims.enums.BarcodeInfos
 import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.LabelTemplates
 import uk.ac.sanger.scgcf.jira.lims.utils.EnvVariableAccess
 
@@ -38,13 +39,23 @@ class ConfigReader {
     }
 
     /**
-     * Gets the label template section of the configuration
+     * Gets the printer label templates section of the configuration
      * @return the section of the config map containing the label template details
      */
     static def getLabeltemplateDetails(LabelTemplates template) {
         checkConfigFileAvailability("In ConfigReader get label template details for ${template.type}")
 
-        configMap['labelTemplateDetails'][template.type]
+        configMap['labelTemplateDetails']['Labels'][template.type]
+    }
+
+    /**
+     * Gets the barcode infos section of the configuration
+     * @return the section of the config map containing the barcode info details
+     */
+    static def getBarcodeInfoDetails(BarcodeInfos bcInfo) {
+        checkConfigFileAvailability("In ConfigReader get barcode info details for ${bcInfo.type}")
+
+        configMap['labelTemplateDetails']['Infos'][bcInfo.type]
     }
 
     /**

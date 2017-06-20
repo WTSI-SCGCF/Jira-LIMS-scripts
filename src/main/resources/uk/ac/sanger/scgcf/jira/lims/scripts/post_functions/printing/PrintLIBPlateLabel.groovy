@@ -8,17 +8,15 @@ import uk.ac.sanger.scgcf.jira.lims.enums.BarcodeInfos
 import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
 
 /**
- * Print SS2 plate labels
+ * Print LIB plate labels
  *
  * Created by as28 on 15/06/2017.
  */
-
-//TODO: delete this when workflows are changed to use specific scripts
 
 @Field private final Logger LOG = LoggerFactory.getLogger(getClass())
 
 Issue curIssue = issue
 
-LOG.debug "Printing SS2 plate barcode labels"
+LOG.debug "Printing LIB plate barcode labels"
 
-WorkflowUtils.printPlateLabels(curIssue, BarcodeInfos.INFO_SS2.toString())
+WorkflowUtils.printPlateLabels(curIssue, BarcodeInfos.INFO_LIB.toString())

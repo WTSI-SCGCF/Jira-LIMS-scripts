@@ -1,8 +1,8 @@
 package uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting
 
 import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates.LabelJsonCreator
-import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates.LibraryPoolTubeLabelJsonCreator
-import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates.SS2LysisBufferLabelJsonCreator
+import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates.StandardTubeLabelJsonCreator
+import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates.StandardPlateLabelJsonCreator
 
 /**
  * Enumerated list of label templates to use with Print My Barcode application.
@@ -11,8 +11,8 @@ import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates.SS2Ly
  */
 enum LabelTemplates {
 
-    LABEL_STANDARD_6MM_PLATE("SS2 Lysis Buffer", SS2LysisBufferLabelJsonCreator.class),
-    LABEL_STANDARD_TUBE("Library Pool Tube", LibraryPoolTubeLabelJsonCreator.class)
+    LABEL_STANDARD_6MM_PLATE("Standard Plate Label", StandardPlateLabelJsonCreator.class),
+    LABEL_STANDARD_TUBE("Standard Tube Label", StandardTubeLabelJsonCreator.class)
 
     private String type
     private Class<?> clazz

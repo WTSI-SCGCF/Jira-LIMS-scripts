@@ -12,6 +12,10 @@ enum WorkflowName {
     PLATE_DNA("Plate DNA"),
     PLATE_CMB("Plate CMB"),
     PLATE_ECH("Plate ECH"),
+    PLATE_LIB("Plate LIB"),
+    TUBE_LPL("Tube LPL"),
+    TUBE_PPL("Tube PPL"),
+    TUBE_NPL("Tube NPL"),
     REAGENT_INSTANCES("Reagent Instances"),
     REAGENT_TEMPLATES("Reagent Templates"),
     LYSIS_BUFFER_REQUESTS("Lysis Buffer Requests"),
@@ -23,9 +27,10 @@ enum WorkflowName {
     COMBINE_PLATES("Combine Plates"),
     SPRI_PLATE_CLEANUP("SPRi Plate Cleanup"),
     DNA_QUANTIFICATION_RUN("DNA Quantification Run"),
-    DNA_QUANTIFICATION_ANALYSIS("DNA Quantification Analysis")
+    DNA_QUANTIFICATION_ANALYSIS("DNA Quantification Analysis"),
+    NORMALISATION_AND_NEXTERA("Normalisation and Nextera")
 
-    //TODO: add plate LIB, tubes and remaining workflows
+    //TODO: add remaining workflows
 
     String workflowName
 

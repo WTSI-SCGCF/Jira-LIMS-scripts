@@ -8,11 +8,11 @@ import groovy.util.logging.Slf4j
  * Created by ke4 on 16/03/2017.
  */
 @Slf4j(value="LOG")
-class SS2LysisBufferLabelJsonCreator implements LabelJsonCreator {
+class StandardPlateLabelJsonCreator implements LabelJsonCreator {
 
     List<String> barcodes;
 
-    SS2LysisBufferLabelJsonCreator(def labelData) {
+    StandardPlateLabelJsonCreator(def labelData) {
         this.barcodes = labelData.barcodes
     }
 
