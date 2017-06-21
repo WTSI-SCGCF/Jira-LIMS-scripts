@@ -276,9 +276,6 @@ class LibraryPrepPostFunctions {
 
                     // get the issue link type
                     IssueLinkType plateLinkType = WorkflowUtils.getIssueLinkType(IssueLinkTypeName.RELATIONSHIPS.toString())
-                    LOG.debug "Plate link type name = ${plateLinkType.getName()}"
-                    LOG.debug "Plate link type inward = ${plateLinkType.inward}"
-                    LOG.debug "Plate link type outward = ${plateLinkType.outward}"
 
                     // for each issue linked to the ECH plate (NB. not just plate links)
                     inwardLinksList.each { IssueLink issLink ->
@@ -363,20 +360,15 @@ class LibraryPrepPostFunctions {
 
         // get the issue link type
         IssueLinkType plateLinkType = WorkflowUtils.getIssueLinkType(IssueLinkTypeName.RELATIONSHIPS.toString())
-        LOG.debug "Plate link type name = ${plateLinkType.getName()}"
-        LOG.debug "Plate link type inward = ${plateLinkType.inward}"
-        LOG.debug "Plate link type outward = ${plateLinkType.outward}"
 
         // get the linked plate issues from the Combine Plates issue
         List<IssueLink> inwardLinksList = WorkflowUtils.getInwardLinksListForIssueId(cmbPlateMutIssue.getId())
-
-        LOG.debug "Number of links from CMB plate to check = ${inwardLinksList.size()}"
 
         def customFieldManager  = ComponentAccessor.getCustomFieldManager()
         def cfBarcode           = customFieldManager.getCustomFieldObject(ConfigReader.getCFId('BARCODE'))
         def cfCombineQuadrant   = customFieldManager.getCustomFieldObject(ConfigReader.getCFId('COMBINE_QUADRANT'))
 
-        // for each linked plate issue (NB. sources and destinations)
+        // for each linked issue
         inwardLinksList.each { IssueLink issLink ->
 
             LOG.debug "Issue link type name = ${issLink.issueLinkType.getName()}"

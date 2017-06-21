@@ -24,7 +24,6 @@ import com.atlassian.query.Query
 import groovy.util.logging.Slf4j
 import groovy.util.slurpersupport.GPathResult
 import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
-import uk.ac.sanger.scgcf.jira.lims.enums.BarcodeInfos
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueLinkTypeName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueTypeName
 import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.LabelTemplates
@@ -323,7 +322,7 @@ class WorkflowUtils {
         // throws a CreateException if it fails
         // (Long sourceIssueId, Long destinationIssueId, Long issueLinkTypeId, Long sequence, ApplicationUser remoteUser)
         try {
-            issLinkManager.createIssueLink(sourceIssueId, destinationIssueId, issueLinkType.getId(), 1L, user)
+            issLinkManager.createIssueLink(sourceIssueId, destinationIssueId, issueLinkType.getId(), null, user)
             LOG.debug "Successfully linked source issue to destination issue"
         } catch (CreateException e) {
             LOG.error "ERROR: Failed to link source issue with id <${sourceIssueId}> to destination issue with id <${destinationIssueId}> with link type <${linkTypeName}>"
@@ -378,6 +377,10 @@ class WorkflowUtils {
         // determine the issue link type
         IssueLinkTypeManager issueLinkTypeManager = ComponentAccessor.getComponent(IssueLinkTypeManager.class)
         IssueLinkType issLnkType = issueLinkTypeManager.getIssueLinkTypesByName(linkTypeName).iterator().next()
+
+        LOG.debug "Issue link type name = ${issLnkType.getName()}"
+        LOG.debug "Issue link type inward = ${issLnkType.inward}"
+        LOG.debug "Issue link type outward = ${issLnkType.outward}"
 
         issLnkType
 
