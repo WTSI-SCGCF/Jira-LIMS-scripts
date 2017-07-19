@@ -57,8 +57,8 @@ void process( Issue curIssue ) {
 	LOG.debug "Elapsed time in create customer tubes: ${elapsedTime / 1000} seconds."
 
 	// set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_CUST_TUBE_BARCODES"), tubeBarcodes)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_CUST_TUBE_BARCODES"), tubeBarcodes)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_CUST_TUBE_DETAILS"), tubeDetails)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_CUST_TUBE_DETAILS"), tubeDetails)
 }

@@ -96,10 +96,10 @@ class LibraryPrepPostFunctions {
                     LOG.debug "Source issue type = ${curSourceIssueTypeName}"
 
                     LOG.debug "Attempting to transition source to 'Done' (resolution 'Completed')"
-                    WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId)
+                    WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId, "Automatically transitioned after Library Prep when destination plate is ready for Pooling")
 
                     LOG.debug "Attempting to transition destination to 'Rdy for Pooling'"
-                    WorkflowUtils.transitionIssue(curDestMutIssue.getId(), destActionId)
+                    WorkflowUtils.transitionIssue(curDestMutIssue.getId(), destActionId, "Automatically transitioned after Library Prep when plate ready for Pooling")
 
                     // link the source plate to the destination issue via 'is a parent of' linking
                     LOG.debug "Attempting to create an issue link between the source and destination plates"
@@ -187,10 +187,10 @@ class LibraryPrepPostFunctions {
                     LOG.debug "Source issue type = ${curSourceIssueTypeName}"
 
                     LOG.debug "Attempting to transition source to 'Rdy for Library Prep'"
-                    WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId)
+                    WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId, "Automatically transitioned after Library Prep when plate needs to be re-run")
 
                     LOG.debug "Attempting to transition destination to 'Failed' (resolution 'Failed in Library Prep)"
-                    WorkflowUtils.transitionIssue(curDestMutIssue.getId(), destActionId)
+                    WorkflowUtils.transitionIssue(curDestMutIssue.getId(), destActionId, "Automatically transitioned after Library Prep when source plate needs to be re-run")
 
                     // de-link the source plate from this issue
                     LOG.debug "Attempting to de-link the source ECH plate"
@@ -305,11 +305,11 @@ class LibraryPrepPostFunctions {
 
                                 if (sourceActionId > 0) {
                                     // transition source ECH plate issue 'In Library Prep Feedback'
-                                    WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId)
+                                    WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId, "Automatically transitioned after Library Prep when plate failed")
 
                                     // set Library prep feedback on source ECH plate issue (re-fetch issue first)
                                     curSourceMutIssue = WorkflowUtils.getMutableIssueForIssueId(sourcePlateIdLong)
-                                    JiraAPIWrapper.setCustomFieldValueByName(curSourceMutIssue, ConfigReader.getCFName("NXT_FEEDBACK_COMMENTS"), sLibraryPrepFeedbackComments)
+                                    JiraAPIWrapper.setCFValueByName(curSourceMutIssue, ConfigReader.getCFName("NXT_FEEDBACK_COMMENTS"), sLibraryPrepFeedbackComments)
 
                                 } else {
                                     LOG.error "Source action id not found, cannot transition ECH source with ID <${sSourcePlateId}> to in Feedback"
@@ -319,7 +319,7 @@ class LibraryPrepPostFunctions {
                                 LOG.debug "Source of ECH plate is a CMB plate"
 
                                 // process the source plates of the CMB plate (checking if they may be re-runnable)
-                                processCombinePlate(curAncestorIssue, sLibraryPrepFeedbackComments)
+                                processCombinePlate(curAncestorIssue.getId(), sLibraryPrepFeedbackComments)
 
                                 // process the ECH plate
                                 sourceActionId = ConfigReader.getTransitionActionId(
@@ -327,7 +327,7 @@ class LibraryPrepPostFunctions {
 
                                 if (sourceActionId > 0) {
                                     // transition source ECH plate issue 'Failed' (resolution 'Failed in Library Prep')
-                                    WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId)
+                                    WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId, "Automatically transitioned after Library Prep when plate failed")
 
                                 } else {
                                     LOG.error "Source action id not found, cannot transition ECH source with ID ${sSourcePlateId}"
@@ -337,7 +337,7 @@ class LibraryPrepPostFunctions {
                     }
 
                     // transition destination LIB plate to 'Failed' (resolution 'Failed in Library Prep')
-                    WorkflowUtils.transitionIssue(curDestMutIssue.getId(), destActionId)
+                    WorkflowUtils.transitionIssue(curDestMutIssue.getId(), destActionId, "Automatically transitioned after Library Prep when source plate failed")
 
                 } else {
                     LOG.error "No destination barcode for source barcode ${curSourceBarcode}"
@@ -354,15 +354,15 @@ class LibraryPrepPostFunctions {
      *
      * @param cmbPlateMutIssue
      */
-    private static void processCombinePlate(MutableIssue cmbPlateMutIssue, String sNXTFeedbackComments) {
+    private static void processCombinePlate(Long cmbPlateId, String sNXTFeedbackComments) {
 
-        LOG.debug "Processing CMB plate with Key = ${cmbPlateMutIssue.getKey()}"
+        LOG.debug "Processing CMB plate with Id = ${cmbPlateId}"
 
         // get the issue link type
         IssueLinkType plateLinkType = WorkflowUtils.getIssueLinkType(IssueLinkTypeName.RELATIONSHIPS.toString())
 
         // get the linked plate issues from the Combine Plates issue
-        List<IssueLink> inwardLinksList = WorkflowUtils.getInwardLinksListForIssueId(cmbPlateMutIssue.getId())
+        List<IssueLink> inwardLinksList = WorkflowUtils.getInwardLinksListForIssueId(cmbPlateId)
 
         def customFieldManager  = ComponentAccessor.getCustomFieldManager()
         def cfBarcode           = customFieldManager.getCustomFieldObject(ConfigReader.getCFId('BARCODE'))
@@ -403,7 +403,7 @@ class LibraryPrepPostFunctions {
 
                         // set NXT feedback on source plate
                         LOG.debug "Source SS2 plate is Empty. Attempting to set NXT feedback comments on source SS2 plate"
-                        JiraAPIWrapper.setCustomFieldValueByName(curAncestorIssue, ConfigReader.getCFName("NXT_FEEDBACK_COMMENTS"), sNXTFeedbackComments)
+                        JiraAPIWrapper.setCFValueByName(curAncestorIssue, ConfigReader.getCFName("NXT_FEEDBACK_COMMENTS"), sNXTFeedbackComments)
                     }
                     if (curStatus.equals(IssueStatusName.PLTSS2_DONE_NOT_EMPTY.toString())) {
                         destActionId = ConfigReader.getTransitionActionId(
@@ -416,7 +416,7 @@ class LibraryPrepPostFunctions {
 
                         // set NXT feedback on source plate
                         LOG.debug "Source DNA plate is Empty. Attempting to set NXT feedback comments on source DNA plate"
-                        JiraAPIWrapper.setCustomFieldValueByName(curAncestorIssue, ConfigReader.getCFName("NXT_FEEDBACK_COMMENTS"), sNXTFeedbackComments)
+                        JiraAPIWrapper.setCFValueByName(curAncestorIssue, ConfigReader.getCFName("NXT_FEEDBACK_COMMENTS"), sNXTFeedbackComments)
                     }
                     if (curStatus.equals(IssueStatusName.PLTDNA_DONE_NOT_EMPTY.toString())) {
                         destActionId = ConfigReader.getTransitionActionId(
@@ -427,7 +427,7 @@ class LibraryPrepPostFunctions {
                     if (destActionId > 0) {
                         LOG.debug "Ancestor transition action Id = ${destActionId}"
                         // transition ancestor plate
-                        WorkflowUtils.transitionIssue(curAncestorIssue.getId(), destActionId)
+                        WorkflowUtils.transitionIssue(curAncestorIssue.getId(), destActionId, "Automatically transitioned after Library Prep failed")
                     } else {
                         LOG.error "Ancestor transition action Id not found, cannot transition ancestor plate with barcode ${curBarcode}"
                     }

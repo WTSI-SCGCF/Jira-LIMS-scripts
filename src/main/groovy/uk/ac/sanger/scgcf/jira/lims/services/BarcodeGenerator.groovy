@@ -66,8 +66,20 @@ class BarcodeGenerator {
         barcodes*.fullBarcode
     }
 
+    /**
+     * Call the REST service to generate barcodes from the database.
+     *
+     * @param method
+     * @param requestBody
+     * @param servicePath
+     * @return
+     */
     private def callBarcodeGenerator(Method method, def requestBody, String servicePath) {
+        LOG.debug("Calling REST service for barcode generation")
+        LOG.debug("servicePath: ${servicePath}")
         LOG.debug("request body: ${requestBody.toString()}")
+        LOG.debug("method: ${method.toString()}")
+        //TODO: add try catch for java.net.ConnectException
         def responseMap = restService.request(method, [:], JSON, servicePath, requestBody)
         def response = responseMap['response']
         def reader = responseMap['reader']

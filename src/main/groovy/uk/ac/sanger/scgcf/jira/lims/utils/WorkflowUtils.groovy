@@ -2,12 +2,14 @@ package uk.ac.sanger.scgcf.jira.lims.utils
 
 import com.atlassian.jira.bc.issue.IssueService
 import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.config.IssueTypeManager
 import com.atlassian.jira.exception.CreateException
 import com.atlassian.jira.issue.Issue
 import com.atlassian.jira.issue.IssueInputParameters
 import com.atlassian.jira.issue.IssueManager
 import com.atlassian.jira.issue.MutableIssue
 import com.atlassian.jira.issue.fields.CustomField
+import com.atlassian.jira.issue.issuetype.IssueType
 import com.atlassian.jira.issue.link.IssueLink
 import com.atlassian.jira.issue.link.IssueLinkManager
 import com.atlassian.jira.issue.link.IssueLinkType
@@ -139,7 +141,7 @@ class WorkflowUtils {
 
                         if(actionId > 0) {
                             // attempt to transition the issue
-                            transitionIssue(mutableIssue.getId(), actionId)
+                            transitionIssue(mutableIssue.getId(), actionId, "Automatically transitioned plate action")
                         } else {
                             LOG.error "ERROR: unable to execute transition, action Id not found in configs for workflow <${plateActionParams.plateWorkflowName}> and transition <${transitionName}>"
                         }
@@ -205,7 +207,21 @@ class WorkflowUtils {
         // assumes there is always a logged in user
         JiraAuthenticationContext authContext = ComponentAccessor.getJiraAuthenticationContext()
         ApplicationUser user = authContext.getLoggedInUser()
-        LOG.debug "Logged in User : ${user.getName()}"
+        LOG.debug "Using logged in User <${user.getName()}> with Id <${user.getId()}>"
+        user
+    }
+
+    /**
+     * Get the automation application user
+     *
+     * @return user
+     */
+    public static ApplicationUser getAutomationUser() {
+
+        // TODO: get this name from the configs
+        String automationUserName = 'jira_automation_user'
+        ApplicationUser user = ComponentAccessor.getUserManager().getUserByName(automationUserName)
+        LOG.debug "Using Automation User <${user.getName()}> with Id <${user.getId()}>"
         user
     }
 
@@ -214,11 +230,12 @@ class WorkflowUtils {
      *
      * @param issueId the Id of the issue to be transitioned
      * @param actionId the transition action id
+     * @param transitionComment issue comment for transition
      * @return the error collection if the validation or transition fail, otherwise nothing
      */
-    public static void transitionIssue(Long issueId, int actionId) {
+    public static void transitionIssue(Long issueId, int actionId, String transitionComment) {
 
-        LOG.debug "Attempting to transition issue with Id <${issueId}> through transition with Id <${actionId}>"
+        LOG.debug "Attempting to transition issue with Id <${issueId}> through transition with action Id <${actionId}>"
 
         // set up the transition
         ApplicationUser user = getLoggedInUser()
@@ -227,7 +244,10 @@ class WorkflowUtils {
         IssueService issueService = ComponentAccessor.getIssueService()
         IssueInputParameters issueInputParameters = issueService.newIssueInputParameters()
         issueInputParameters.setAssigneeId(user.getName())
-        issueInputParameters.setComment("Automatically transitioned by script.")
+        if(!transitionComment?.trim()) {
+            transitionComment = "Automatically transitioned by script."
+        }
+        issueInputParameters.setComment(transitionComment)
         issueInputParameters.setSkipScreenCheck(true)
 //        issueInputParameters.setRetainExistingValuesWhenParameterNotProvided(true, true)
 
@@ -284,7 +304,7 @@ class WorkflowUtils {
         LOG.debug "Transition action id = ${transitionActionId}"
 
         if(transitionActionId > 0) {
-            transitionIssue(issueId, transitionActionId)
+            transitionIssue(issueId, transitionActionId, "Automatically transitioned by workflow alias ${workflowAliasName} through transition alias ${transitionAliasName}")
         } else {
             LOG.error "ERROR: Transition action id not found in transition configs, cannot transition issue"
         }
@@ -432,12 +452,12 @@ class WorkflowUtils {
     /**
      * Clear a list of fields
      *
-     * @param fieldNamesToClear
+     * @param fieldAliasNamesToClear
      * @param issue
      */
-    private static void clearFieldsValue(List<String> fieldNamesToClear, Issue issue) {
-        fieldNamesToClear.each { fieldName ->
-            JiraAPIWrapper.setCustomFieldValueByName(issue, fieldName, null)
+    private static void clearFieldsValue(List<String> fieldAliasNamesToClear, Issue issue) {
+        fieldAliasNamesToClear.each { fieldAliasName ->
+            JiraAPIWrapper.setCFValueByName(issue, ConfigReader.getCFName(fieldAliasName), null)
         }
     }
 
@@ -458,7 +478,7 @@ class WorkflowUtils {
         Issue issue = null
 
         try {
-            CustomField cf = JiraAPIWrapper.getCustomFieldByName(ConfigReader.getCFName("BARCODE"))
+            CustomField cf = JiraAPIWrapper.getCFByName(ConfigReader.getCFName("BARCODE"))
             JqlClauseBuilder jqlBuilder = JqlQueryBuilder.newClauseBuilder()
 
             Query query = jqlBuilder.project("CNT").and().customField(cf.getIdAsLong()).like(barcode).buildQuery()
@@ -556,14 +576,14 @@ class WorkflowUtils {
         IssueLinkType groupToContainerLinkType = getIssueLinkType(IssueLinkTypeName.GROUP_INCLUDES.toString())
 
         // get the outward linked issues from the group issue
-        List<IssueLink> outwardLinksListQNTA = getOutwardLinksListForIssueId(groupIssue.getId())
+        List<IssueLink> outwardLinksList = getOutwardLinksListForIssueId(groupIssue.getId())
 
-        LOG.debug "Found <${outwardLinksListQNTA.size()}> issues linked to the group issue"
+        LOG.debug "Found <${outwardLinksList.size()}> issues linked to the group issue"
 
         List<Issue> contIssueList = []
 
         // check for linked containers
-        outwardLinksListQNTA.each { IssueLink outwardIssueLink ->
+        outwardLinksList.each { IssueLink outwardIssueLink ->
 
             Issue curLinkedIssue = outwardIssueLink.getDestinationObject()
 
@@ -585,18 +605,23 @@ class WorkflowUtils {
     /**
      * Get a list of any parent container issues linked to the input container issue
      *
-     * @param sourceContainerIssue - the source container issue with parent container issues
-     * @return a list of container issues
+     * @param sourceContainerId - the source container issue id
+     * @return a list of parent container issues
      */
-    public static List<Issue> getContainerParentContainers(Issue sourceContainerIssue) {
+    public static List<Issue> getParentContainersForContainerId(Long sourceContainerId) {
 
-        LOG.debug "Getting parent containers linked to the source container issue with Id = <${sourceContainerIssue.getId().toString()}> and Key = <${sourceContainerIssue.getKey()}>"
+        if(sourceContainerId == null) {
+            LOG.error "ERROR: Source issue null on getting parent containers, cannot continue"
+            return null
+        }
+
+        LOG.debug "Getting parent containers linked to the source container issue with Id = <${sourceContainerId.toString()}>"
 
         // plate to plate link type
         IssueLinkType containerToContainerLinkType = getIssueLinkType(IssueLinkTypeName.RELATIONSHIPS.toString())
 
         // determine the ancestors of the source issue
-        List<IssueLink> inwardsLinksList = getInwardLinksListForIssueId(sourceContainerIssue.getId())
+        List<IssueLink> inwardsLinksList = getInwardLinksListForIssueId(sourceContainerId)
 
         LOG.debug "Found <${inwardsLinksList.size()}> issues linked to the source container issue"
 
@@ -626,10 +651,54 @@ class WorkflowUtils {
 
     }
 
-    // TODO: method to get child container issues
-//    public static List<Issue> getContainerChildContainers(Issue sourceContainerIssue) {
-//
-//    }
+    /**
+     * Get a list of any child container issues linked to the input container issue
+     *
+     * @param sourceContainerId - the source container issue id
+     * @return a list of child container issues
+     */
+    public static List<Issue> getChildContainersForContainerId(Long sourceContainerId) {
+
+        if(sourceContainerId == null) {
+            LOG.error "ERROR: Source issue id null on getting child containers, cannot continue"
+            return null
+        }
+
+        LOG.debug "Getting child containers linked to the source container issue with Id = <${sourceContainerId.toString()}>"
+
+        // container to container link type
+        IssueLinkType containerToContainerLinkType = getIssueLinkType(IssueLinkTypeName.RELATIONSHIPS.toString())
+
+        // determine the descendants of the source issue
+        List<IssueLink> outwardsLinksList = getOutwardLinksListForIssueId(sourceContainerId)
+
+        LOG.debug "Found <${outwardsLinksList.size()}> issues linked to the source container issue"
+
+        List<Issue> contIssueList = []
+
+        // check for linked containers
+        outwardsLinksList.each { IssueLink issLink ->
+
+            // get the destination of the link, i.e. the descendant (or child) issue
+            Issue curLinkedIssue = issLink.getDestinationObject()
+            LOG.debug "Descendant issue link type name = ${issLink.getIssueLinkType().getName()}"
+
+            // we only want linked containers, not other types of issues
+            if (issLink.getIssueLinkType() == containerToContainerLinkType) {
+
+                LOG.debug "Found child container issue:"
+                LOG.debug "Issue type = <${curLinkedIssue.getIssueType().getName()}>"
+                LOG.debug "Status = <${curLinkedIssue.getStatus().getName()}>"
+                LOG.debug "Id = <${curLinkedIssue.getId().toString()}>"
+                LOG.debug "Key = <${curLinkedIssue.getKey()}>"
+                LOG.debug "Summary = <${curLinkedIssue.getSummary()}>"
+
+                contIssueList.add(curLinkedIssue)
+            }
+        }
+        contIssueList
+
+    }
 
     /**
      * Print plate labels from the specified printer for the given number of plates with the supplied info type
@@ -645,6 +714,7 @@ class WorkflowUtils {
             numberOfLabels = Double.valueOf(JiraAPIWrapper.getCFValueByName(sourceIssue, ConfigReader.getCFName("NUMBER_OF_PLATES"))).intValue()
         } catch (NumberFormatException e) {
             LOG.error "Number format exception, cannot determine number of plates"
+            LOG.error(e.getMessage())
             numberOfLabels = 1
         }
 
@@ -657,6 +727,95 @@ class WorkflowUtils {
                 new PrintLabelAction(printerName, numberOfLabels, labelTemplate, labelData, bcInfoType)
         printLabelAction.execute()
 
+    }
+
+    /**
+     * Create a new Issue using the input user and parameters
+     *
+     * @param issueInputParameters
+     * @return
+     */
+    public static Issue createIssue(IssueService issueService, ApplicationUser user, IssueInputParameters issueInputParameters) {
+
+        LOG.debug "Creating a new issue with input parameters:"
+        LOG.debug "Summary = ${issueInputParameters.getSummary()}"
+
+//        IssueService issueService = ComponentAccessor.getIssueService()
+
+        if(user != null) {
+            LOG.debug "Attempting to validate creation of issue using automation user <${user.getName()}>"
+
+            IssueService.CreateValidationResult createValidationResult = issueService.validateCreate(user, issueInputParameters)
+
+            if (createValidationResult.isValid()) {
+
+                // check for warnings
+                if (createValidationResult.getWarningCollection() != null && createValidationResult.getWarningCollection().hasAnyWarnings()) {
+                    LOG.debug "WARNING: Creation of issue is valid but had warnings: {}\n", createValidationResult.getWarningCollection().toString()
+                }
+
+                LOG.debug "Attempting to create issue"
+                IssueService.IssueResult createResult = issueService.create(user, createValidationResult)
+                if (createResult.isValid()) {
+
+                    Issue newIssue = createResult.getIssue()
+                    LOG.debug "Issue created successfully with summary <${newIssue.getSummary()}> and key <${newIssue.getKey()}>"
+
+                    // check for warnings
+                    if (createResult.getWarningCollection() != null && createResult.getWarningCollection().hasAnyWarnings()) {
+                        LOG.debug "WARNING: Creation of issue with id <${newIssue.getId().toString()}> was successful but had warnings: {}\n", createResult.getWarningCollection().toString()
+                    }
+                    return newIssue
+                } else {
+                    // TODO: what to do when failed to create issue? post function so limited options
+                    LOG.error "Failed to create issue. Errors:"
+
+                    // check for errors
+                    if (createResult.getErrorCollection() != null && createResult.getErrorCollection().hasAnyErrors()) {
+                        LOG.debug "WARNING: Creation of issue failed with errors: {}\n", createResult.getErrorCollection().toString()
+                    }
+                }
+            } else {
+                LOG.error "Create issue failed validation. Errors:"
+
+                // check for errors
+                if (createValidationResult.getErrorCollection() != null && createValidationResult.getErrorCollection().hasAnyErrors()) {
+                    LOG.debug "WARNING: Creation of issue failed validation with errors: {}\n", createValidationResult.getErrorCollection().toString()
+                }
+            }
+
+        } else {
+            LOG.error "Create issue failed because automationUser was null"
+        }
+        null
+    }
+
+    /**
+     * Finds an issue type by it's name
+     *
+     * @param name
+     * @return
+     */
+    public static IssueType getIssueTypeByName(String name)
+    {
+        if(name == null || name.isEmpty())
+        {
+            return null
+        }
+
+        IssueType foundIssueType = null
+
+        IssueTypeManager itMgr = ComponentAccessor.getComponent(IssueTypeManager.class)
+        for(IssueType it : itMgr.getIssueTypes())
+        {
+            if(it.getName().equals(name))
+            {
+                foundIssueType = it
+                break
+            }
+        }
+
+        return foundIssueType
     }
 
 }

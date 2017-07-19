@@ -29,7 +29,7 @@ abstract class BaseIssueAction implements IssueAction {
         if (!(curIssue != null && issueTypeName != null && customFieldName != null)) {
             InvalidInputException invalidInputException =
                     new InvalidInputException("The passed arguments are invalid."
-                            + "[curIssue: $curIssue, workflowName: $issueTypeName, customFieldName: $customFieldName]")
+                            + "[curIssue: $curIssue, issueTypeName: $issueTypeName, customFieldName: $customFieldName]")
             ValidatorExceptionHandler.throwAndLog(invalidInputException, invalidInputException.message, null)
         }
     }

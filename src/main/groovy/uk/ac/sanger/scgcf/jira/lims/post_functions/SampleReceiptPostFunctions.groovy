@@ -75,7 +75,7 @@ class SampleReceiptPostFunctions {
                     if (linkedIssue.getStatus().getName() == IssueStatusName.PLTSS2_RDY_FOR_SUBMISSION.toString()) {
 
                         // transition the issue to In Submission
-                        WorkflowUtils.transitionIssue(linkedIssue.getId(), transitionActionId)
+                        WorkflowUtils.transitionIssue(linkedIssue.getId(), transitionActionId, "Automatically transitioned after Sample Receiving and the plate is in a Submission")
                     }
                 }
             }

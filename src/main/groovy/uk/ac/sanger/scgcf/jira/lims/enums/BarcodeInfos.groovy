@@ -1,7 +1,8 @@
 package uk.ac.sanger.scgcf.jira.lims.enums
 
 /**
- * Enumerated list of barcode infos to use with Print My Barcode application.
+ * Enumerated list of barcode infos to use with Barcode generation.
+ * These define the central three letters in the barcode: xxxx.INF.xxxxxxxx
  *
  * Created by as28 on 15/06/2017.
  */

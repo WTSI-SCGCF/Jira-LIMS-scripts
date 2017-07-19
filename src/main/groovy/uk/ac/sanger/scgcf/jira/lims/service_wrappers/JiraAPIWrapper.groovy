@@ -6,11 +6,10 @@ import com.atlassian.jira.issue.CustomFieldManager
 import com.atlassian.jira.issue.Issue
 import com.atlassian.jira.issue.IssueInputParameters
 import com.atlassian.jira.issue.fields.CustomField
-import com.atlassian.jira.security.JiraAuthenticationContext
-import com.atlassian.jira.user.ApplicationUser
 import com.atlassian.jira.util.ErrorCollection
 import com.atlassian.jira.util.WarningCollection
 import groovy.util.logging.Slf4j
+import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
 import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
 
 /**
@@ -38,7 +37,7 @@ class JiraAPIWrapper {
      * @param cfName
      * @return CustomField object
      */
-    static CustomField getCustomFieldByName(String cfName) {
+    static CustomField getCFByName(String cfName) {
         LOG.debug "Get custom field for name: ${cfName}"
         // assumption here that custom field name is unique
         def customFields = getCustomFieldManager().getCustomFieldObjectsByName(cfName)
@@ -63,9 +62,9 @@ class JiraAPIWrapper {
      */
     static String getCFValueByName(Issue curIssue, String cfName) {
         LOG.debug "Attempting to get custom field value for issue with Id = <${curIssue.getId().toString()}> and cfname: ${cfName}"
-        CustomField cf = getCustomFieldByName(cfName)
+        CustomField cf = getCFByName(cfName)
         if(cf != null) {
-            String cfValue = curIssue.getCustomFieldValue(getCustomFieldByName(cfName)) as String
+            String cfValue = curIssue.getCustomFieldValue(cf) as String
             LOG.debug("Retrieved custom field value: ${cfValue}")
             cfValue
         } else {
@@ -80,7 +79,7 @@ class JiraAPIWrapper {
 //    public List<String> getMultiSelectFieldValue(@Nonnull String fieldName, @Nonnull Issue issue) {
 //        Validate.notNull(fieldName);
 //        Validate.notNull(issue);
-//        final CustomField customField = getCustomFieldByName(fieldName);
+//        final CustomField customField = getCFByName(fieldName);
 //
 //        // Let's use the Option interface here as well instead of a specific implementation
 //        @SuppressWarnings("unchecked")
@@ -132,9 +131,9 @@ class JiraAPIWrapper {
      * @param cfName
      * @param newValue
      * TODO: this needs to handle custom fields other than strings
-     * TODO: should this input a MutableIssue?
+     * TODO: could this input just an Issue Id?
      */
-    static void setCustomFieldValueByName(Issue curIssue, String cfName, String newValue) {
+    static void setCFValueByName(Issue curIssue, String cfName, String newValue) {
         LOG.debug "Attempting to set customfield value by name"
         LOG.debug "Issue Id: ${curIssue.getId()}"
         LOG.debug "Custom field name: ${cfName}"
@@ -146,7 +145,7 @@ class JiraAPIWrapper {
         def tgtField = getCustomFieldManager().getCustomFieldObjects(curIssue).find { it.name == cfName }
         if (tgtField == null) {
             LOG.error "Custom field with name <${cfName}> was not found, cannot set value"
-            //TODO: what error handling is required here? should not fail silently?
+            //TODO: what error handling is required here? maybe should not fail silently?
             return
         }
         LOG.debug "Custom field instance ID : ${tgtField.getId()}"
@@ -204,21 +203,32 @@ class JiraAPIWrapper {
      * TODO: this needs to handle custom fields other than strings
      * TODO: should this input a MutableIssue?
      */
-    static void clearCustomFieldValueByName(Issue curIssue, String cfName) {
-        setCustomFieldValueByName(curIssue, cfName, "")
+    static void clearCFValueByName(Issue curIssue, String cfName) {
+        setCFValueByName(curIssue, cfName, "")
     }
 
     /**
      * Get the id of a specified custom field for an issue
      *
-     * @param curIssue current issue
      * @param cfName name of the custom field
      * @return String id of custom field
      */
-    static String getCustomFieldIDByName(String cfName) {
+    static String getCFIDByName(String cfName) {
         LOG.debug "Get custom field Id for name: ${cfName}"
-        String cfID = getCustomFieldByName(cfName).id
+        String cfID = getCFByName(cfName).id
         LOG.debug("CF idString: ${cfID}")
+        cfID
+    }
+
+    /**
+     * Get the id of a specified custom field for an issue using alias name
+     *
+     * @param aliasName alias name of the custom field
+     * @return String id of custom field
+     */
+    static String getCFIDByAliasName(String aliasName) {
+        LOG.debug "Get custom field Id for Alias name: ${aliasName}"
+        String cfID = getCFIDByName(ConfigReader.getCFName(aliasName))
         cfID
     }
 

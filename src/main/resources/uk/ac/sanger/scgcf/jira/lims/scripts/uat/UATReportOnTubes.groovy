@@ -3,8 +3,6 @@ package uk.ac.sanger.scgcf.jira.lims.scripts.uat
 import com.atlassian.jira.component.ComponentAccessor
 import com.atlassian.jira.issue.Issue
 import com.atlassian.jira.issue.attachment.CreateAttachmentParamsBean
-import com.atlassian.jira.security.JiraAuthenticationContext
-import com.atlassian.jira.user.ApplicationUser
 import groovy.transform.Field
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -77,7 +75,7 @@ void process( Issue curIssue ) {
 
 	// set the details custom field
     String repString = "Check attachment for report details"
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_REPORT_DETAILS"), repString)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_REPORT_DETAILS"), repString)
 
     def attachmentManager = ComponentAccessor.getAttachmentManager()
 

@@ -46,7 +46,7 @@ class DependentFieldValidator {
 
         if ( parentFieldActualValue.equals(parentFieldValue)) {
             Object dependentFieldValue = JiraAPIWrapper.getCFValueByName(issue, dependentFieldName)
-            CustomField dependentFieldToValidate = JiraAPIWrapper.getCustomFieldByName(dependentFieldName)
+            CustomField dependentFieldToValidate = JiraAPIWrapper.getCFByName(dependentFieldName)
 
             LOG.debug "Validating $dependentFieldName field's value. Its value: '$dependentFieldValue'"
             if (dependentFieldToValidate && !dependentFieldValue) {

@@ -7,26 +7,31 @@ package uk.ac.sanger.scgcf.jira.lims.enums
  */
 enum IssueTypeName {
 
-    STUDY("Study"),
-    PLATE_SS2("Plate SS2"),
-    PLATE_DNA("Plate DNA"),
+    COMBINE_PLATES("Combine Plates"),
+    FEEDBACK("Feedback"),
+    IMPORT_DECLARATION("Import Declaration"),
+    INPUT_QC("Input QC"),
+    LIBRARY_POOLING("Library Pooling"),
+    LYSIS_BUFFER_REQUEST("Lysis Buffer Request"),
+    NORM_AND_NEXTERA("Normalisation and Nextera"),
     PLATE_CMB("Plate CMB"),
+    PLATE_DNA("Plate DNA"),
     PLATE_ECH("Plate ECH"),
     PLATE_LIB("Plate LIB"),
-    TUBE_LIBRARY_POOL("Tube Library Pool"),
-    TUBE_LIBRARY_POOL_PRE_NORM("Tube Library Pool Pre-Norm"),
-    TUBE_LIBRARY_POOL_NORM("Tube Library Pool Norm"),
+    PLATE_SS2("Plate SS2"),
+    QUANTIFICATION_ANALYSIS("Quantification Analysis"),
+    QUANTIFICATION_RUN("Quantification Run"),
     REAGENT_LOT_OR_BATCH("Reagent Lot or Batch"),
     REAGENT_TEMPLATE("Reagent Template"),
-    LYSIS_BUFFER_REQUEST("Lysis Buffer Request"),
-    IMPORT_DECLARATION("Import Declaration"),
-    SAMPLE_RECEIPT("Sample Receipt"),
-    SUBMISSION("Submission"),
-    SMART_SEQ2("Smart-seq2"),
-    INPUT_QC("Input QC"),
     SPRI_PLATE_CLEANUP("SPRi Plate Cleanup"),
-    QUANTIFICATION_RUN("Quantification Run"),
-    QUANTIFICATION_ANALYSIS("Quantification Analysis")
+    SAMPLE_RECEIPT("Sample Receipt"),
+    SMART_SEQ2("Smart-seq2"),
+    STUDY("Study"),
+    SUBMISSION("Submission"),
+    TUBE_LPL("Tube LPL"),
+    TUBE_PPL("Tube NPL"),
+    TUBE_IPL("Tube IPL"),
+    TUBE_NPL("Tube PPL")
 
     String issueTypeName
 

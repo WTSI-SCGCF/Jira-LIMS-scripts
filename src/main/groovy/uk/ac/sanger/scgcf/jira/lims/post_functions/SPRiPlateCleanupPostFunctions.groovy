@@ -1,7 +1,6 @@
 package uk.ac.sanger.scgcf.jira.lims.post_functions
 
 import com.atlassian.jira.component.ComponentAccessor
-import com.atlassian.jira.exception.CreateException
 import com.atlassian.jira.issue.Issue
 import com.atlassian.jira.issue.MutableIssue
 import com.atlassian.jira.issue.link.IssueLink
@@ -95,14 +94,14 @@ class SPRiPlateCleanupPostFunctions {
 
                     if(sourceActionId > 0) {
                         LOG.debug "Attempting to transition source to 'Done' (resolution 'Completed SPRi')"
-                        WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId)
+                        WorkflowUtils.transitionIssue(curSourceMutIssue.getId(), sourceActionId, "Automatically transitioned after SPRi plate cleanup completed successfully")
                     } else {
                         LOG.error "ERROR: Source action id not found, cannot transition source for ID ${sourcePlateId}"
                     }
 
                     if(destActionId > 0) {
                         LOG.debug "Attempting to transition destination to 'Rdy for Quant'"
-                        WorkflowUtils.transitionIssue(curDestMutIssue.getId(), destActionId)
+                        WorkflowUtils.transitionIssue(curDestMutIssue.getId(), destActionId, "Automatically transitioned after SPRi plate cleanup completed successfully")
                     } else {
                         LOG.error "ERROR: Destination action id not found, cannot transition destination with barcode ${curDestBarcode}"
                     }
@@ -184,11 +183,11 @@ class SPRiPlateCleanupPostFunctions {
                 if(sourceActionId > 0) {
                     // transition source plate issue
                     // to either 'Failed' (resolution 'Failed in SPRi') for CMB, or to 'In SPRi Feedback' for SS2 or DNA
-                    WorkflowUtils.transitionIssue(sourcePlateMutIssue.getId(), sourceActionId)
+                    WorkflowUtils.transitionIssue(sourcePlateMutIssue.getId(), sourceActionId, "Automatically transitioned after SPRi plate cleanup failed")
 
                     // set SPRi feedback on source plate issue (re-fetch issue first)
                     sourcePlateMutIssue = WorkflowUtils.getMutableIssueForIssueId(sourcePlateIdLong)
-                    JiraAPIWrapper.setCustomFieldValueByName(sourcePlateMutIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
+                    JiraAPIWrapper.setCFValueByName(sourcePlateMutIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
 
                 } else {
                     LOG.error "Source action id not found, cannot transition source for ID ${sourcePlateIdStr}"
@@ -200,7 +199,7 @@ class SPRiPlateCleanupPostFunctions {
 
                 if(destActionId > 0) {
                     // transition destination to 'Failed' (resolution 'Failed in SPRi')
-                    WorkflowUtils.transitionIssue(destECHPlateMutIssue.getId(), destActionId)
+                    WorkflowUtils.transitionIssue(destECHPlateMutIssue.getId(), destActionId, "Automatically transitioned after SPRi plate cleanup failed")
                 } else {
                     LOG.error "Destination action id not found, cannot transition destination with barcode ${destECHPlateBarcode}"
                 }
@@ -269,7 +268,7 @@ class SPRiPlateCleanupPostFunctions {
 
                         // set SPRi feedback on source plate
                         LOG.debug "Source SS2 plate is Empty. Attempting to set SPRi comments on source SS2 plate"
-                        JiraAPIWrapper.setCustomFieldValueByName(curAncestorIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
+                        JiraAPIWrapper.setCFValueByName(curAncestorIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
                     }
                     if (curStatus.equals(IssueStatusName.PLTSS2_DONE_NOT_EMPTY.toString())) {
                         destActionId = ConfigReader.getTransitionActionId(
@@ -282,7 +281,7 @@ class SPRiPlateCleanupPostFunctions {
 
                         // set SPRi feedback on source plate
                         LOG.debug "Source DNA plate is Empty. Attempting to set SPRi comments on source DNA plate"
-                        JiraAPIWrapper.setCustomFieldValueByName(curAncestorIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
+                        JiraAPIWrapper.setCFValueByName(curAncestorIssue, ConfigReader.getCFName("SPRI_FEEDBACK_COMMENTS"), sSPRiFeedbackComments)
                     }
                     if (curStatus.equals(IssueStatusName.PLTDNA_DONE_NOT_EMPTY.toString())) {
                         destActionId = ConfigReader.getTransitionActionId(
@@ -293,7 +292,7 @@ class SPRiPlateCleanupPostFunctions {
                     if (destActionId > 0) {
                         LOG.debug "Ancestor transition action Id = ${destActionId}"
                         // transition ancestor plate
-                        WorkflowUtils.transitionIssue(curAncestorIssue.getId(), destActionId)
+                        WorkflowUtils.transitionIssue(curAncestorIssue.getId(), destActionId, "Automatically transitioned after SPRi plate cleanup failed")
                     } else {
                         LOG.error "Ancestor transition action Id not found, cannot transition ancestor plate with barcode ${curBarcode}"
                     }
@@ -315,7 +314,7 @@ class SPRiPlateCleanupPostFunctions {
 
         // fetch common fields from SPRi issue
         int numberOfPlates = Double.valueOf(JiraAPIWrapper.getCFValueByName(spriIssue, ConfigReader.getCFName("NUMBER_OF_PLATES"))).intValue()
-        LOG.debug "Number of plates = ${numberOfPlates}"
+        LOG.debug "Number of plates = ${Integer.toString(numberOfPlates)}"
 
         Map<String, String> barcodesMap = [:]
 

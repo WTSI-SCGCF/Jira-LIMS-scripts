@@ -74,8 +74,8 @@ void process( Issue curIssue ) {
     LOG.debug "normTubeDetails = ${normTubeDetails}"
 
     // set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_NORM_TUBE_BARCODES"), normTubeBarcodes)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_NORM_TUBE_BARCODES"), normTubeBarcodes)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_NORM_TUBE_DETAILS"), normTubeDetails)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_NORM_TUBE_DETAILS"), normTubeDetails)
 }

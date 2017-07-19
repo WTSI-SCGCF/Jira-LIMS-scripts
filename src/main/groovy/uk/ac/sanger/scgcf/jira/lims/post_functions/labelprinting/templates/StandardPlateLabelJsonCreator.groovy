@@ -10,7 +10,7 @@ import groovy.util.logging.Slf4j
 @Slf4j(value="LOG")
 class StandardPlateLabelJsonCreator implements LabelJsonCreator {
 
-    List<String> barcodes;
+    List<String> barcodes
 
     StandardPlateLabelJsonCreator(def labelData) {
         this.barcodes = labelData.barcodes
@@ -19,7 +19,9 @@ class StandardPlateLabelJsonCreator implements LabelJsonCreator {
     @Override
     def createLabelBody() {
         List body = []
+
         LOG.debug("barcodes to add to the template: $barcodes")
+
         barcodes.each { barcode ->
             def labelJson = labelJson()
             labelJson.label_1.barcode = barcode

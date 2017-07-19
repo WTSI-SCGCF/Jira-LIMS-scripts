@@ -62,8 +62,8 @@ void process(Issue curIssue) {
 
 
     // set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_STAMP_PLT_BARCODE"), stampPlateBarcode)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_STAMP_PLT_BARCODE"), stampPlateBarcode)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_STAMP_PLT_DETAILS"), stampPlateDetails)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_STAMP_PLT_DETAILS"), stampPlateDetails)
 }

@@ -38,7 +38,7 @@ class MandatoryFieldValidator {
 
         fieldsToValidate.forEach {
             String customFieldName = ConfigReader.getCFName(it)
-            CustomField customfieldToValidate = JiraAPIWrapper.getCustomFieldByName(customFieldName)
+            CustomField customfieldToValidate = JiraAPIWrapper.getCFByName(customFieldName)
             String customFieldValue = JiraAPIWrapper.getCFValueByName(issue, customFieldName)
             if (customFieldValue != null) customFieldValue = customFieldValue.trim()
 

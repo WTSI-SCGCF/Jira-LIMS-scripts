@@ -41,7 +41,7 @@ class SmartSeq2PostFunctions {
             if(mutableIssue != null && mutableIssue.getIssueType().getName() == issueTypeName.toString()) {
                 // transition the issue
                 if(mutableIssue.getStatus().getName() == fromIssueStatusName.toString()) {
-                    WorkflowUtils.transitionIssue(plateIdLong, actionId)
+                    WorkflowUtils.transitionIssue(plateIdLong, actionId, "Automatically transitioned after Smart-seq2")
                 }
             }
         }

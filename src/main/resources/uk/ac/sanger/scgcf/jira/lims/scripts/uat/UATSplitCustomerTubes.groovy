@@ -73,8 +73,8 @@ void process( Issue curIssue ) {
     LOG.debug "Elapsed time in split customer tubes: ${elapsedTime / 1000} seconds."
 
    // set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_SPLIT_PLT_BARCODES"), splitPlateBarcodes)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_SPLIT_PLT_BARCODES"), splitPlateBarcodes)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_SPLIT_PLT_DETAILS"), splitPlateDetails)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_SPLIT_PLT_DETAILS"), splitPlateDetails)
 }

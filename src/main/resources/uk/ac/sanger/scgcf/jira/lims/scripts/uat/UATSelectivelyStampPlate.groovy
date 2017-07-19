@@ -61,8 +61,8 @@ void process( Issue curIssue ) {
     LOG.debug "Elapsed time in selective stamp: ${elapsedTime / 1000} seconds."
 
     // set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_SEL_STAMP_PLT_BARCODE"), selStampPlateBarcode)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_SEL_STAMP_PLT_BARCODE"), selStampPlateBarcode)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_SEL_STAMP_PLT_DETAILS"), selStampPlateDetails)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_SEL_STAMP_PLT_DETAILS"), selStampPlateDetails)
 }

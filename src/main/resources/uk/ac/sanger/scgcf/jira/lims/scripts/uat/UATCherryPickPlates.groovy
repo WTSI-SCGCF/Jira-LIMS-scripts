@@ -70,8 +70,8 @@ void process( Issue curIssue ) {
     LOG.debug "Elapsed time in cherry pick: ${elapsedTime / 1000} seconds."
 
 	// set the barcodes custom field
-	JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_CHRY_PLT_BARCODE"), chryPickPlateBarcode)
+	JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_CHRY_PLT_BARCODE"), chryPickPlateBarcode)
 
 	// set the details custom field
-	JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_CHRY_PLT_DETAILS"), chryPickPlateDetails)
+	JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_CHRY_PLT_DETAILS"), chryPickPlateDetails)
 }

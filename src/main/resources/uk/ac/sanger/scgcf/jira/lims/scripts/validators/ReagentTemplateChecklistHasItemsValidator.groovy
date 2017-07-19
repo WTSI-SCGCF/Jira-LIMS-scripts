@@ -24,7 +24,7 @@ String COMMON_ERROR_MESSAGE = "The checklist marked below requires items. Rememb
 
 try {
 
-    CustomField customfieldToValidate = JiraAPIWrapper.getCustomFieldByName(ConfigReader.getCFName(CHECKLIST_ALIAS))
+    CustomField customfieldToValidate = JiraAPIWrapper.getCFByName(ConfigReader.getCFName(CHECKLIST_ALIAS))
 
     def invalidInputException
 

@@ -46,13 +46,19 @@ class PlateRemover extends BaseIssueAction {
             return
         }
 
-        selectedIssueIds.each { LOG.debug "Plate ID: $it has been selected to add" }
+        selectedIssueIds.each { LOG.debug "Plate ID: $it has been selected to be removed" }
 
-        PlateActionParameterHolder parameters = plateActionParameterHolders.get(issueTypeName)
-        parameters.plateIds = selectedIssueIds
+        try {
+            PlateActionParameterHolder parameters = plateActionParameterHolders.get(issueTypeName)
+            parameters.plateIds = selectedIssueIds
 
-        // de-link and transition the plates
-        WorkflowUtils.removePlatesFromGivenGrouping(parameters, fieldNamesToClear)
+            // de-link and transition the plates
+            WorkflowUtils.removePlatesFromGivenGrouping(parameters, fieldNamesToClear)
+
+        } catch(NullPointerException ex) {
+            LOG.error("No parameters retrieved for this issuetype <${issueTypeName}>, cannot continue")
+            LOG.error(ex.getMessage())
+        }
     }
 
     /**

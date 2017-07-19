@@ -71,8 +71,8 @@ void process( Issue curIssue ) {
 	LOG.debug "Elapsed time in combine sorted plates: ${elapsedTime / 1000} seconds."
 
     // set the barcodes custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_CMB_PLT_BARCODE"), combinePlateBarcode)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_CMB_PLT_BARCODE"), combinePlateBarcode)
 
     // set the details custom field
-    JiraAPIWrapper.setCustomFieldValueByName(curIssue, ConfigReader.getCFName("UAT_CMB_PLT_DETAILS"), combinePlateDetails)
+    JiraAPIWrapper.setCFValueByName(curIssue, ConfigReader.getCFName("UAT_CMB_PLT_DETAILS"), combinePlateDetails)
 }

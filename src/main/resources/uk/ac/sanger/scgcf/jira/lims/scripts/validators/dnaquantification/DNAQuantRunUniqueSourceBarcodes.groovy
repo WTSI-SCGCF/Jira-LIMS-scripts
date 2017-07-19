@@ -24,14 +24,14 @@ Issue curIssue = issue
 
 LOG.debug "Attempting to check the DNA Quantification Run source barcodes are all distinct"
 
-CustomField cfSourceBC1 = JiraAPIWrapper.getCustomFieldByName(ConfigReader.getCFName("SOURCE_1_BARCODE"))
-CustomField cfSourceBC2 = JiraAPIWrapper.getCustomFieldByName(ConfigReader.getCFName("SOURCE_2_BARCODE"))
-CustomField cfSourceBC3 = JiraAPIWrapper.getCustomFieldByName(ConfigReader.getCFName("SOURCE_3_BARCODE"))
-CustomField cfSourceBC4 = JiraAPIWrapper.getCustomFieldByName(ConfigReader.getCFName("SOURCE_4_BARCODE"))
-CustomField cfSourceBC5 = JiraAPIWrapper.getCustomFieldByName(ConfigReader.getCFName("SOURCE_5_BARCODE"))
-CustomField cfSourceBC6 = JiraAPIWrapper.getCustomFieldByName(ConfigReader.getCFName("SOURCE_6_BARCODE"))
-CustomField cfSourceBC7 = JiraAPIWrapper.getCustomFieldByName(ConfigReader.getCFName("SOURCE_7_BARCODE"))
-CustomField cfSourceBC8 = JiraAPIWrapper.getCustomFieldByName(ConfigReader.getCFName("SOURCE_8_BARCODE"))
+CustomField cfSourceBC1 = JiraAPIWrapper.getCFByName(ConfigReader.getCFName("SOURCE_1_BARCODE"))
+CustomField cfSourceBC2 = JiraAPIWrapper.getCFByName(ConfigReader.getCFName("SOURCE_2_BARCODE"))
+CustomField cfSourceBC3 = JiraAPIWrapper.getCFByName(ConfigReader.getCFName("SOURCE_3_BARCODE"))
+CustomField cfSourceBC4 = JiraAPIWrapper.getCFByName(ConfigReader.getCFName("SOURCE_4_BARCODE"))
+CustomField cfSourceBC5 = JiraAPIWrapper.getCFByName(ConfigReader.getCFName("SOURCE_5_BARCODE"))
+CustomField cfSourceBC6 = JiraAPIWrapper.getCFByName(ConfigReader.getCFName("SOURCE_6_BARCODE"))
+CustomField cfSourceBC7 = JiraAPIWrapper.getCFByName(ConfigReader.getCFName("SOURCE_7_BARCODE"))
+CustomField cfSourceBC8 = JiraAPIWrapper.getCFByName(ConfigReader.getCFName("SOURCE_8_BARCODE"))
 
 InvalidInputException invalidInputException
 

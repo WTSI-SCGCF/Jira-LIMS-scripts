@@ -68,7 +68,7 @@ class DNAQuantificationPostFunctions {
         LOG.debug "Key = <${ECHPlateIssue.getKey()}>"
 
         LOG.debug "Attempting to fetch the linked parent plate"
-        List<Issue> parentContainers = WorkflowUtils.getContainerParentContainers(ECHPlateIssue)
+        List<Issue> parentContainers = WorkflowUtils.getParentContainersForContainerId(ECHPlateIssue.getId())
 
         if(parentContainers.size() <= 0) {
             LOG.error "Expected to find a parent plate issue linked to the ECH plate but none found, cannot continue"
@@ -106,7 +106,7 @@ class DNAQuantificationPostFunctions {
 
                 // copy feedback comments into ECH plate
                 LOG.debug "Attempting to copy feedback comments into ECH plate"
-                JiraAPIWrapper.setCustomFieldValueByName(ECHPlateIssue, ConfigReader.getCFName("QNT_FEEDBACK_COMMENTS"), feedbackComments)
+                JiraAPIWrapper.setCFValueByName(ECHPlateIssue, ConfigReader.getCFName("QNT_FEEDBACK_COMMENTS"), feedbackComments)
 
             } else {
                 LOG.error "Unexpected ancestor plate type <${curContainerIssue.getIssueType().getName()}> linked to the ECH plate, ignoring"
@@ -128,7 +128,7 @@ class DNAQuantificationPostFunctions {
         LOG.debug "Key = <${CMBPlateIssue.getKey()}>"
 
         LOG.debug "Attempting to fetch the linked parent plates"
-        List<Issue> parentContainers = WorkflowUtils.getContainerParentContainers(CMBPlateIssue)
+        List<Issue> parentContainers = WorkflowUtils.getParentContainersForContainerId(CMBPlateIssue.getId())
 
         if(parentContainers.size() <= 0) {
             LOG.error "Expected to find parent plate issues linked to the CMB plate but none found, cannot continue"
@@ -161,7 +161,7 @@ class DNAQuantificationPostFunctions {
 
                     // copy QNT feedback comments into SS2 plate
                     LOG.debug "Attempting to copy feedback comments into SS2 plate"
-                    JiraAPIWrapper.setCustomFieldValueByName(curContainerIssue, ConfigReader.getCFName("QNT_FEEDBACK_COMMENTS"), feedbackComments)
+                    JiraAPIWrapper.setCFValueByName(curContainerIssue, ConfigReader.getCFName("QNT_FEEDBACK_COMMENTS"), feedbackComments)
 
                 } else if (curPltStatus.equals(IssueStatusName.PLTSS2_DONE_NOT_EMPTY.toString())) {
                     transActionId = ConfigReader.getTransitionActionId(
@@ -176,7 +176,7 @@ class DNAQuantificationPostFunctions {
 
                     // copy QNT feedback comments into DNA plate
                     LOG.debug "Attempting to copy feedback comments into DNA plate"
-                    JiraAPIWrapper.setCustomFieldValueByName(curContainerIssue, ConfigReader.getCFName("QNT_FEEDBACK_COMMENTS"), feedbackComments)
+                    JiraAPIWrapper.setCFValueByName(curContainerIssue, ConfigReader.getCFName("QNT_FEEDBACK_COMMENTS"), feedbackComments)
 
                 } else if (curPltStatus.equals(IssueStatusName.PLTDNA_DONE_NOT_EMPTY.toString())) {
                     transActionId = ConfigReader.getTransitionActionId(
@@ -187,7 +187,7 @@ class DNAQuantificationPostFunctions {
 
             if (transActionId > 0) {
                 LOG.debug "Attempting to transition the CMB source plate issue"
-                WorkflowUtils.transitionIssue(curContainerIssue.getId(), transActionId)
+                WorkflowUtils.transitionIssue(curContainerIssue.getId(), transActionId, "Automatically transitioned by script after DNA Quantification failed")
             } else {
                 LOG.error "ERROR: Transition action id not found, cannot transition CMB source plate issue:"
                 LOG.error "ERROR: Issue type = ${curContainerIssue.getIssueType().getName()}"

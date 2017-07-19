@@ -64,6 +64,6 @@ void process( Issue curIssue ) {
     fieldNames.each { curFieldName ->
         LOG.debug "clearing field for curFieldName: ${curFieldName}"
         LOG.debug "curFieldName class = ${curFieldName.getClass()}"
-        JiraAPIWrapper.clearCustomFieldValueByName( curIssue, curFieldName )
+        JiraAPIWrapper.clearCFValueByName( curIssue, curFieldName )
     }
 }

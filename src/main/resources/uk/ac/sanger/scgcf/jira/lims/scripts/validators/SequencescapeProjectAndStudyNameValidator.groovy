@@ -34,22 +34,22 @@ try {
     def projectState = sequencescapeValidator.validateProjectName(projectName)
     if (projectState == SequencescapeEntityState.NOT_EXISTS) {
         invalidInputException.addError(
-                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCFName("SEQS_PROJECT_NAME")),
+                JiraAPIWrapper.getCFIDByAliasName("SEQS_PROJECT_NAME"),
                 SequencescapeValidator.SS_PROJECT_NOT_EXISTS_ERROR_MESSAGE)
     } else if (projectState == SequencescapeEntityState.INACTIVE) {
         invalidInputException.addError(
-                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCFName("SEQS_PROJECT_NAME")),
+                JiraAPIWrapper.getCFIDByAliasName("SEQS_PROJECT_NAME"),
                 SequencescapeValidator.SS_PROJECT_NOT_ACTIVE_ERROR_MESSAGE)
     }
 
     def studyState = sequencescapeValidator.validateStudyName(studyName)
     if (studyState == SequencescapeEntityState.NOT_EXISTS) {
         invalidInputException.addError(
-                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCFName("SEQS_STUDY_NAME")),
+                JiraAPIWrapper.getCFIDByAliasName("SEQS_STUDY_NAME"),
                 SequencescapeValidator.SS_STUDY_NOT_EXISTS_ERROR_MESSAGE)
     } else if (studyState == SequencescapeEntityState.INACTIVE) {
         invalidInputException.addError(
-                JiraAPIWrapper.getCustomFieldIDByName(ConfigReader.getCFName("SEQS_STUDY_NAME")),
+                JiraAPIWrapper.getCFIDByAliasName("SEQS_STUDY_NAME"),
                 SequencescapeValidator.SS_STUDY_NOT_ACTIVE_ERROR_MESSAGE)
     }
 } catch (Exception ex) {

@@ -3,6 +3,7 @@ package uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting
 import groovy.util.logging.Slf4j
 import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
 import uk.ac.sanger.scgcf.jira.lims.configurations.JiraLimsServices
+import uk.ac.sanger.scgcf.jira.lims.enums.BarcodeInfos
 import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.templates.LabelJsonCreator
 import uk.ac.sanger.scgcf.jira.lims.services.BarcodeGenerator
 
@@ -73,7 +74,7 @@ class PlateLabelGenerator {
     }
 
     private void generateBarcode() {
-        if (numberOfLabels == 1) {
+        if (1 == numberOfLabels) {
             barcodes.add(barcodeGenerator.generateSingleBarcode(barcodePrefix, barcodeInfo))
         } else {
             barcodes.addAll(barcodeGenerator.generateBatchBarcodes(barcodePrefix, barcodeInfo, numberOfLabels))
@@ -82,7 +83,7 @@ class PlateLabelGenerator {
 
     private initBarcodeProperties() {
         Map<String, String> labelTemplateDetails = (Map<String, String>) ConfigReader.getLabeltemplateDetails(LabelTemplates.LABEL_STANDARD_6MM_PLATE)
-        Map<String, String> bcInfoDetails = (Map<String, String>) ConfigReader.getBarcodeInfoDetails(bcInfoType)
+        Map<String, String> bcInfoDetails = (Map<String, String>) ConfigReader.getBarcodeInfoDetails(BarcodeInfos.valueOf(bcInfoType))
 
         def labelTemplateId = labelTemplateDetails.id
 
@@ -100,7 +101,7 @@ class PlateLabelGenerator {
 
         Map<String, String> printMyBarcodeDetails = (Map<String, String>) ConfigReader.getServiceDetails(JiraLimsServices.PRINT_MY_BARCODE)
         barcodePrefix = printMyBarcodeDetails["barcodePrefix"]
-        barcodeInfo = bcInfoDetails["info"]
+        barcodeInfo   = bcInfoDetails["info"]
 
         plateLabelJsonCreators = new HashMap<>()
         plateLabelJsonCreators.put(LabelTemplates.LABEL_STANDARD_6MM_PLATE.type, LabelTemplates.LABEL_STANDARD_6MM_PLATE)

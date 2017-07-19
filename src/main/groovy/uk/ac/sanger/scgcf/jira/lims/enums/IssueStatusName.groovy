@@ -17,7 +17,8 @@ enum IssueStatusName {
     PLTSS2_DONE_NOT_EMPTY("PltSS2 Done Not Empty"),
     PLTDNA_DONE_EMPTY("PltDNA Done Empty"),
     PLTDNA_DONE_NOT_EMPTY("PltDNA Done Not Empty"),
-    PLTECH_IN_SPRI("PltECH In SPRi")
+    PLTECH_IN_SPRI("PltECH In SPRi"),
+    TUBLPL_IN_POOLING("TubLPL In Pooling")
 
 
     String issueStatusName

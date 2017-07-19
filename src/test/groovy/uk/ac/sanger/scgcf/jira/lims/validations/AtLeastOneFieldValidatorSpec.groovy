@@ -32,11 +32,11 @@ class AtLeastOneFieldValidatorSpec extends Specification {
         ConfigReader.getCFName(fieldAliases[2]) >> fieldNames[2]
 
         GroovyMock(JiraAPIWrapper, global:true)
-        JiraAPIWrapper.getCustomFieldByName(fieldNames[0]) >>
+        JiraAPIWrapper.getCFByName(fieldNames[0]) >>
                 new MockCustomField(mockedCustomFieldIDs[0], mockedCustomFieldNames[0], mockCustomFieldType)
-        JiraAPIWrapper.getCustomFieldByName(fieldNames[1]) >>
+        JiraAPIWrapper.getCFByName(fieldNames[1]) >>
                 new MockCustomField(mockedCustomFieldIDs[1], mockedCustomFieldNames[1], mockCustomFieldType)
-        JiraAPIWrapper.getCustomFieldByName(fieldNames[2]) >>
+        JiraAPIWrapper.getCFByName(fieldNames[2]) >>
                 new MockCustomField(mockedCustomFieldIDs[2], mockedCustomFieldNames[2], mockCustomFieldType)
         JiraAPIWrapper.getCFValueByName(issueStub, fieldNames[0]) >> ""
         JiraAPIWrapper.getCFValueByName(issueStub, fieldNames[1]) >> ""
@@ -71,11 +71,11 @@ class AtLeastOneFieldValidatorSpec extends Specification {
         ConfigReader.getCFName(mandatoryFieldAliases[2]) >> mandatoryFieldNames[2]
 
         GroovyMock(JiraAPIWrapper, global:true)
-        JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[0]) >>
+        JiraAPIWrapper.getCFByName(mandatoryFieldNames[0]) >>
                 new MockCustomField(mockedCustomFieldIDs[0], mockedCustomFieldNames[0], mockCustomFieldType)
-        JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[1]) >>
+        JiraAPIWrapper.getCFByName(mandatoryFieldNames[1]) >>
                 new MockCustomField(mockedCustomFieldIDs[1], mockedCustomFieldNames[1], mockCustomFieldType)
-        JiraAPIWrapper.getCustomFieldByName(mandatoryFieldNames[2]) >>
+        JiraAPIWrapper.getCFByName(mandatoryFieldNames[2]) >>
                 new MockCustomField(mockedCustomFieldIDs[2], mockedCustomFieldNames[2], mockCustomFieldType)
         JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[0]) >> ""
         JiraAPIWrapper.getCFValueByName(issueStub, mandatoryFieldNames[1]) >> ""
