@@ -41,12 +41,12 @@ class JiraAPIWrapper {
         LOG.debug "Get custom field for name: ${cfName}"
         // assumption here that custom field name is unique
         def customFields = getCustomFieldManager().getCustomFieldObjectsByName(cfName)
-        if (customFields != null) {
-            customFields[0]
-        } else {
-            LOG.debug("No custom fields found with name: ${cfName}")
-            null
+        if (customFields == null) {
+            LOG.debug "No custom fields found with name: ${cfName}"
+            return null
         }
+        // assume first entry is correct, should only be one
+        customFields[0]
     }
 
     /**
@@ -63,13 +63,14 @@ class JiraAPIWrapper {
     static String getCFValueByName(Issue curIssue, String cfName) {
         LOG.debug "Attempting to get custom field value for issue with Id = <${curIssue.getId().toString()}> and cfname: ${cfName}"
         CustomField cf = getCFByName(cfName)
+        String cfValue = null
         if(cf != null) {
-            String cfValue = curIssue.getCustomFieldValue(cf) as String
-            LOG.debug("Retrieved custom field value: ${cfValue}")
-            cfValue
+            cfValue = curIssue.getCustomFieldValue(cf) as String
+            LOG.debug "Custom field value = ${cfValue}"
         } else {
             LOG.error "Custom field null for issue with Id = <${curIssue.getId().toString()}> and cfname = <${cfName}>, cannot return value"
         }
+        cfValue
     }
 
 //    /**

@@ -14,6 +14,7 @@ import uk.ac.sanger.scgcf.jira.lims.enums.IssueLinkTypeName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueStatusName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueTypeName
 import uk.ac.sanger.scgcf.jira.lims.enums.ProjectName
+import uk.ac.sanger.scgcf.jira.lims.enums.SelectOptionId
 import uk.ac.sanger.scgcf.jira.lims.enums.TransitionName
 import uk.ac.sanger.scgcf.jira.lims.enums.WorkflowName
 import uk.ac.sanger.scgcf.jira.lims.service_wrappers.JiraAPIWrapper
@@ -25,7 +26,6 @@ import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
  *
  * Created by as28 on 06/07/2017.
  */
-
 
 @Slf4j(value = "LOG")
 class LibraryPoolingPostFunctions {
@@ -153,6 +153,10 @@ class LibraryPoolingPostFunctions {
             tubesMap["block_column"] = sBlockCol
 
             processParentsOfLIB(LIBPlateIssue, tubesMap, sLIBPlateBarcode)
+            if(!tubesMap.containsKey('number_of_tubes')) {
+                LOG.error "ERROR: Failed to determine number of library tubes, cannot continue"
+                return
+            }
 
             LOG.debug "Tubes map after back from checking LIB parents:"
             int numBarcodesReqd = (int)tubesMap['number_of_tubes']
@@ -176,7 +180,7 @@ class LibraryPoolingPostFunctions {
             int iNumTubes = Integer.valueOf(tubesMap['number_of_tubes'].toString())
             (1..iNumTubes).each { int indx ->
                 String sIndx = Integer.toString(indx)
-                Issue tubeIssue = createLPLTubeIssue(LPOIssue, tubesMap, sIndx)
+                Issue tubeIssue = createLPLTubeIssue(tubesMap, sIndx)
                 if(tubeIssue == null) {
                     LOG.error "ERROR: tube creation failed and returned null"
                 } else {
@@ -234,33 +238,69 @@ class LibraryPoolingPostFunctions {
      * @param sTubeIndx
      * @return
      */
-    private static Issue createLPLTubeIssue(Issue LPOIssue, Map<String, Object> tubesMap, String sTubeIndx) {
+    private static Issue createLPLTubeIssue(Map<String, Object> tubesMap, String sTubeIndx) {
 
         LOG.debug "In create LPL tube issue method"
         ApplicationUser automationUser = WorkflowUtils.getAutomationUser()
 
         IssueService issueService = ComponentAccessor.getIssueService()
 
-        IssueInputParameters issueInputParameters = issueService.newIssueInputParameters()
-        issueInputParameters.setProjectId(ComponentAccessor.getProjectManager().getProjectObjByName(ProjectName.CONTAINERS.toString()).getId())
-        issueInputParameters.setIssueTypeId(WorkflowUtils.getIssueTypeByName(IssueTypeName.TUBE_LPL.toString()).getId())
-        issueInputParameters.setSummary("Library Pool Tube: ${tubesMap[sTubeIndx]["barcode"]}")
-        issueInputParameters.setReporterId(LPOIssue.getReporterId())
-        issueInputParameters.setAssigneeId(WorkflowUtils.getLoggedInUser().getId().toString())
-        issueInputParameters.setComment("This issue was created automatically during Library Pooling")
-//                issueInputParameters.setSecurityLevelId(10000L)
-        issueInputParameters.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("BARCODE"), tubesMap[sTubeIndx]["barcode"].toString())
-        issueInputParameters.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("POOLING_BLOCK_ROW"), tubesMap[sTubeIndx]["block_row"].toString())
-        issueInputParameters.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("POOLING_BLOCK_COLUMN"), tubesMap["block_column"].toString())
-        issueInputParameters.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("POOLED_FROM_QUADRANT"), tubesMap[sTubeIndx]["pooled_from_quadrant"].toString())
-//                issueInputParameters.addCustomFieldValue(myDateField.getId(), "3/Jan/2012")
-//                issueInputParameters.addCustomFieldValue(myDateTime.getId(), "30/Jan/13 10:53 PM")
-//                issueInputParameters.addCustomFieldValue(mySelectList.getId(), "1234")                  // 1234 is option id as string
-//                issueInputParameters.addCustomFieldValue(myMultiSelectList.getId(), "1234, 5678")       // 1234 and 5678 are option id's as strings
-//                issueInputParameters.addCustomFieldValue(myMultiSelectUserList.getId(), "uname1, uname2")
+        IssueInputParameters issParams = issueService.newIssueInputParameters()
+        issParams.setProjectId(ComponentAccessor.getProjectManager().getProjectObjByName(ProjectName.CONTAINERS.toString()).getId())
+        issParams.setIssueTypeId(WorkflowUtils.getIssueTypeByName(IssueTypeName.TUBE_LPL.toString()).getId())
+        issParams.setSummary("Library Pool Tube: ${tubesMap[sTubeIndx]["barcode"]}")
+        // TODO: permissions - may need to set security level here
+//                issParams.setSecurityLevelId(10000L)
+        issParams.setReporterId(WorkflowUtils.getLoggedInUser().getId().toString())
+        issParams.setAssigneeId(WorkflowUtils.getLoggedInUser().getId().toString())
+        issParams.setComment("This issue was created automatically during Library Pooling")
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("due_date")) {
+            issParams.setDueDate(tubesMap[sTubeIndx]["due_date"].toString())
+        }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("barcode")) {
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("BARCODE"), tubesMap[sTubeIndx]["barcode"].toString())
+        }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("block_row")) {
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("POOLING_BLOCK_ROW"), tubesMap[sTubeIndx]["block_row"].toString())
+        }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("block_column")) {
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("POOLING_BLOCK_COLUMN"), tubesMap["block_column"].toString())
+        }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("pooled_from_quadrant")) {
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("POOLED_FROM_QUADRANT"), tubesMap[sTubeIndx]["pooled_from_quadrant"].toString())
+        }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("customer")) {
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("CUSTOMER"), tubesMap[sTubeIndx]["customer"].toString())
+        }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("sbm_plate_format_opt_id")) {
+            // N.B. the value is a select option id as string
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("PLATE_FORMAT"), tubesMap[sTubeIndx]["sbm_plate_format_opt_id"].toString())
+        }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("sbm_cells_per_library_pool_opt_id")) {
+            // N.B. the value is a select option id as string
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("CELLS_PER_LIBRARY_POOL"), tubesMap[sTubeIndx]["sbm_cells_per_library_pool_opt_id"].toString())
+        }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("qnt_avg_sample_conc")) {
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("AVG_SAMPLE_CONCENTRATION"), tubesMap[sTubeIndx]["qnt_avg_sample_conc"].toString())
+        }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("iqc_outcome_opt_id")) {
+            // N.B. the value is a select option id as string
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("IQC_OUTCOME"), tubesMap[sTubeIndx]["iqc_outcome_opt_id"].toString())
+        }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("iqc_feedback_opt_id")) {
+            // N.B. the value is a select option id as string
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("IQC_FEEDBACK"), tubesMap[sTubeIndx]["iqc_feedback_opt_id"].toString())
+        }
+//                issParams.addCustomFieldValue(myDateField.getId(), "3/Jan/2012")
+//                issParams.addCustomFieldValue(myDateTime.getId(), "30/Jan/13 10:53 PM")
+//                issParams.addCustomFieldValue(mySelectList.getId(), "1234")                  // 1234 is option id as string
+//                issParams.addCustomFieldValue(myMultiSelectList.getId(), "1234, 5678")       // 1234 and 5678 are option id's as strings
+//                issParams.addCustomFieldValue(myMultiSelectUserList.getId(), "uname1, uname2")
 
         LOG.debug "Calling issue creation for LPL tube issue with barcode <${tubesMap[sTubeIndx]["barcode"]}>"
-        Issue createdIssue = WorkflowUtils.createIssue(issueService, automationUser, issueInputParameters)
+        LOG.debug "Issue parameters:"
+        LOG.debug issParams.toString()
+        Issue createdIssue = WorkflowUtils.createIssue(issueService, automationUser, issParams)
         if(createdIssue != null) {
             LOG.debug "Created LPL tube issue with summary <${createdIssue.getSummary()}> and key <${createdIssue.getKey()}>"
             return createdIssue
@@ -300,10 +340,110 @@ class LibraryPoolingPostFunctions {
             LOG.debug "Key = ${parentContainerOfLIB.getKey()}"
 
             if (parentContainerOfLIB.getIssueType().getName() == IssueTypeName.PLATE_ECH.toString()) {
+
+                // get Quant avg sample concentration from linked Quant Analysis issue
+                String sQntAvgSampleConc = null
+                Issue qntaIssue = WorkflowUtils.getQuantAnalysisIssueForContainerId(parentContainerOfLIB.getId())
+                if(qntaIssue != null) {
+                    sQntAvgSampleConc = JiraAPIWrapper.getCFValueByName(parentContainerOfLIB, ConfigReader.getCFName("AVG_SAMPLE_CONCENTRATION"))
+                    LOG.debug "QNT Avg Sample Concentration = ${sQntAvgSampleConc}"
+                }
+
                 // parent of the ECH may be an SS2, DNA or CMB plate
-                processParentsOfECH(parentContainerOfLIB, tubesMap, LIBPlateBarcode)
+                processParentsOfECH(parentContainerOfLIB, tubesMap, LIBPlateBarcode, sQntAvgSampleConc)
             }
         }
+
+    }
+
+    /**
+     * Get the IQC Outcome option Id value given the issue
+     *
+     * @param iqcIssue
+     * @return
+     */
+    private static String getIQCOutcomeOptionId(Issue iqcIssue) {
+
+        String sIqcOutcomeOptId
+        String sIqcOutcome = JiraAPIWrapper.getCFValueByName(iqcIssue, ConfigReader.getCFName("IQC_OUTCOME"))
+        LOG.debug "IQC Outcome = ${sIqcOutcome}"
+        if(sIqcOutcome == 'Pass') {
+            sIqcOutcomeOptId = SelectOptionId.IQC_OUTCOME_PASS.toString()
+        } else if(sIqcOutcome == 'Fail') {
+            sIqcOutcomeOptId = SelectOptionId.IQC_OUTCOME_FAIL.toString()
+        } else {
+            sIqcOutcomeOptId = '-1'
+        }
+        LOG.debug "IQC Outcome option Id = ${sIqcOutcomeOptId}"
+        sIqcOutcomeOptId
+
+    }
+
+    /**
+     * Get the IQC Feedback option Id value given the issue
+     *
+     * @param iqcIssue
+     * @return
+     */
+    private static String getIQCFeedbackOptionId(Issue iqcIssue) {
+
+        String sIqcFeedbackOptId
+        String sIqcFeedback = JiraAPIWrapper.getCFValueByName(iqcIssue, ConfigReader.getCFName("IQC_FEEDBACK"))
+        LOG.debug "IQC Feedback = ${sIqcFeedback}"
+        if(sIqcFeedback == 'Pass') {
+            sIqcFeedbackOptId = SelectOptionId.IQC_FEEDBACK_PASS.toString()
+        } else if(sIqcFeedback == 'Fail') {
+            sIqcFeedbackOptId = SelectOptionId.IQC_FEEDBACK_FAIL.toString()
+        } else {
+            sIqcFeedbackOptId = '-1'
+        }
+        LOG.debug "IQC Feedback option Id = ${sIqcFeedbackOptId}"
+        sIqcFeedbackOptId
+
+    }
+
+    /**
+     * Get the SBM Cells per Library Pool option Id value given the issue
+     *
+     * @param iqcIssue
+     * @return
+     */
+    private static String getSBMCellsPerPoolOptionId(String sSBMCellsPerPool) {
+
+        String sSBMCellsPerPoolOptId
+        LOG.debug "SBM Cells per Library Pool = ${sSBMCellsPerPool}"
+        if(sSBMCellsPerPool == '96') {
+            sSBMCellsPerPoolOptId = SelectOptionId.SBM_CELLS_PER_LIBRARY_POOL_96.toString()
+        } else if(sSBMCellsPerPool == '384') {
+            sSBMCellsPerPoolOptId = SelectOptionId.SBM_CELLS_PER_LIBRARY_POOL_384.toString()
+        } else {
+            sSBMCellsPerPoolOptId = '-1'
+        }
+        LOG.debug "SBM Cells per Library Pool option Id = ${sSBMCellsPerPoolOptId}"
+        sSBMCellsPerPoolOptId
+
+    }
+
+    /**
+     * Get the SBM Plate Format option Id value given the issue
+     *
+     * @param iqcIssue
+     * @return
+     */
+    private static String getSBMPlateFormatOptionId(Issue sbmIssue) {
+
+        String sSBMPlateFormatOptId
+        String sSBMPlateFormat = JiraAPIWrapper.getCFValueByName(sbmIssue, ConfigReader.getCFName("PLATE_FORMAT"))
+        LOG.debug "SBM Plate Format = ${sSBMPlateFormat}"
+        if(sSBMPlateFormat == '96') {
+            sSBMPlateFormatOptId = SelectOptionId.SBM_PLATE_FORMAT_96.toString()
+        } else if(sSBMPlateFormat == '384') {
+            sSBMPlateFormatOptId = SelectOptionId.SBM_PLATE_FORMAT_384.toString()
+        } else {
+            sSBMPlateFormatOptId = '-1'
+        }
+        LOG.debug "SBM Plate Format option Id = ${sSBMPlateFormatOptId}"
+        sSBMPlateFormatOptId
 
     }
 
@@ -315,7 +455,7 @@ class LibraryPoolingPostFunctions {
      * @param tubesMap
      * @param LIBPlateBarcode
      */
-    private static void processParentsOfECH(Issue ECHPlateIssue, Map<String, Object> tubesMap, String LIBPlateBarcode) {
+    private static void processParentsOfECH(Issue ECHPlateIssue, Map<String, Object> tubesMap, String LIBPlateBarcode, String sQntAvgSampleConc) {
 
         LOG.debug "Attempting to fetch the parent SS2, DNA or CMB plate of the ECH plate"
         List<Issue> parentCntrsOfECH = WorkflowUtils.getParentContainersForContainerId(ECHPlateIssue.getId())
@@ -339,19 +479,41 @@ class LibraryPoolingPostFunctions {
             if (parentContOfECH.getIssueType().getName() == IssueTypeName.PLATE_SS2.toString() || parentContOfECH.getIssueType().getName() == IssueTypeName.PLATE_DNA.toString()) {
 
                 // get cells per pool which should be 96 or 384
-                String sCellsPerPool = JiraAPIWrapper.getCFValueByName(parentContOfECH, ConfigReader.getCFName("CELLS_PER_LIBRARY_POOL"))
+                String sSBMCellsPerPool = JiraAPIWrapper.getCFValueByName(parentContOfECH, ConfigReader.getCFName("CELLS_PER_LIBRARY_POOL"))
+                String sSBMCellsPerPoolOptId = getSBMCellsPerPoolOptionId(sSBMCellsPerPool)
+                LOG.debug "SBM Cells per Library Pool = ${sSBMCellsPerPool}"
 
-                if(sCellsPerPool == '384') {
-                    // num required tubes = 1, quadrants All
-                    // add one tube to tubesMap:
-                    tubesMap['number_of_tubes'] = 1
-                    tubesMap['1'] = [:]
-                    tubesMap['1']['parent_barcode'] = LIBPlateBarcode
-                    tubesMap['1']['block_row'] = 'A'
-                    tubesMap['1']['pooled_from_quadrant'] = 'All'
+                // get plate format which should be 96 or 384
+                String sSubmittedPlateFormatOptId = getSBMPlateFormatOptionId(parentContOfECH)
+
+                String sSubmCustomer
+//                String iqcAvgConcWells
+                String sIqcOutcomeOptId
+                String sIqcFeedbackOptId
+                String sSubmDueDate
+
+                // get fields from linked Submission issue
+                Issue submIssue = WorkflowUtils.getSubmissionIssueForContainerId(parentContOfECH.getId())
+                if(submIssue != null) {
+                    sSubmCustomer = JiraAPIWrapper.getCFValueByName(submIssue, ConfigReader.getCFName("CUSTOMER"))
+                    LOG.debug "Customer = ${sSubmCustomer}"
+                    if(submIssue.getDueDate() != null) {
+                        sSubmDueDate = submIssue.getDueDate().format('d/MMM/yy')
+                        LOG.debug "Due Date = ${sSubmDueDate}"
+                    }
                 }
 
-                if(sCellsPerPool == '96') {
+                // get fields from linked IQC issue
+                Issue iqcIssue = WorkflowUtils.getIQCIssueForContainerId(parentContOfECH.getId())
+                if(iqcIssue != null) {
+                    sIqcOutcomeOptId = getIQCOutcomeOptionId(iqcIssue)
+                    sIqcFeedbackOptId = getIQCFeedbackOptionId(iqcIssue)
+
+//                    iqcAvgConcWells = JiraAPIWrapper.getCFValueByName(iqcIssue, ConfigReader.getCFName("AVERAGE_CONCENTRATION_OF_THE_WELLS"))
+//                    LOG.debug "Avg Concentration wells = ${iqcAvgConcWells}"
+                }
+
+                if(sSBMCellsPerPool == '96') {
                     // num required tubes = 4, quadrants 1-4
                     // add 4 tubes to tubesMap
                     tubesMap['number_of_tubes'] = 4
@@ -361,13 +523,74 @@ class LibraryPoolingPostFunctions {
                         tubesMap[sIndx]['parent_barcode'] = LIBPlateBarcode
                         tubesMap[sIndx]['block_row'] = getRowLtr(indx) // returns 'A' -> 'D')
                         tubesMap[sIndx]['pooled_from_quadrant'] = sIndx
+                        if(sSubmittedPlateFormatOptId != null) {
+                            tubesMap[sIndx]['sbm_plate_format_opt_id'] = sSubmittedPlateFormatOptId
+                        }
+                        if(sSBMCellsPerPoolOptId != null) {
+                            tubesMap[sIndx]['sbm_cells_per_library_pool_opt_id'] = sSBMCellsPerPoolOptId
+                        }
+                        if(sSubmCustomer != null) {
+                            tubesMap[sIndx]['customer'] = sSubmCustomer
+                        }
+                        if(sSubmDueDate != null) {
+                            tubesMap[sIndx]['due_date'] = sSubmDueDate
+                        }
+//                        if(iqcAvgConcWells != null) {
+//                            tubesMap[sIndx]['avg_concentration_wells'] = iqcAvgConcWells
+//                        }
+                        if(sIqcOutcomeOptId != null) {
+                            tubesMap[sIndx]['iqc_outcome_opt_id'] = sIqcOutcomeOptId
+                        }
+                        if(sIqcFeedbackOptId != null) {
+                            tubesMap[sIndx]['iqc_feedback_opt_id'] = sIqcFeedbackOptId
+                        }
+                        if(sQntAvgSampleConc != null) {
+                            tubesMap[sIndx]['qnt_avg_sample_conc'] = sQntAvgSampleConc
+                        }
+
                     }
                 }
+
+                if(sSBMCellsPerPool == '384') {
+                    // num required tubes = 1, quadrants All
+                    // add one tube to tubesMap:
+                    tubesMap['number_of_tubes'] = 1
+                    tubesMap['1'] = [:]
+                    tubesMap['1']['parent_barcode'] = LIBPlateBarcode
+                    tubesMap['1']['block_row'] = 'A'
+                    tubesMap['1']['pooled_from_quadrant'] = 'All'
+                    if(sSubmittedPlateFormatOptId != null) {
+                        tubesMap['1']['sbm_plate_format_opt_id'] = sSubmittedPlateFormatOptId
+                    }
+                    if(sSBMCellsPerPoolOptId != null) {
+                        tubesMap['1']['sbm_cells_per_library_pool_opt_id'] = sSBMCellsPerPoolOptId
+                    }
+                    if(sSubmCustomer != null) {
+                        tubesMap['1']['customer'] = sSubmCustomer
+                    }
+                    if(sSubmDueDate != null) {
+                        tubesMap['1']['due_date'] = sSubmDueDate
+                    }
+//                    if(iqcAvgConcWells != null) {
+//                        tubesMap['1']['avg_concentration_wells'] = iqcAvgConcWells
+//                    }
+                    if(sIqcOutcomeOptId != null) {
+                        tubesMap['1']['iqc_outcome_opt_id'] = sIqcOutcomeOptId
+                    }
+                    if(sIqcFeedbackOptId != null) {
+                        tubesMap['1']['iqc_feedback_opt_id'] = sIqcFeedbackOptId
+                    }
+                    if(sQntAvgSampleConc != null) {
+                        tubesMap['1']['qnt_avg_sample_conc'] = sQntAvgSampleConc
+                    }
+
+                }
+
             }
             if (parentContOfECH.getIssueType().getName() == IssueTypeName.PLATE_CMB.toString()) {
 
                 // determine the parents of the CMB plate
-                processParentsOfCMB(parentContOfECH, tubesMap, LIBPlateBarcode)
+                processParentsOfCMB(parentContOfECH, tubesMap, LIBPlateBarcode, sQntAvgSampleConc)
             }
         }
 
@@ -381,7 +604,7 @@ class LibraryPoolingPostFunctions {
      * @param tubesMap
      * @param LIBPlateBarcode
      */
-    private static void processParentsOfCMB(Issue CMBPlateIssue, Map<String, Object> tubesMap, String LIBPlateBarcode) {
+    private static void processParentsOfCMB(Issue CMBPlateIssue, Map<String, Object> tubesMap, String LIBPlateBarcode, String sQntAvgSampleConc) {
 
         tubesMap['number_of_tubes'] = 0
 
@@ -409,15 +632,72 @@ class LibraryPoolingPostFunctions {
 
                 tubesMap['number_of_tubes'] += 1
 
-                // NB. cells per pool should be 96 for 96-well plates that are combined
-                // String sCellsPerPool = JiraAPIWrapper.getCFValueByName(parentContOfCMB, ConfigReader.getCFName("CELLS_PER_LIBRARY_POOL"))
+                // get cells per pool which should be 96 or 384
+                String sSBMCellsPerPool = JiraAPIWrapper.getCFValueByName(parentContOfCMB, ConfigReader.getCFName("CELLS_PER_LIBRARY_POOL"))
+                String sSBMCellsPerPoolOptId = getSBMCellsPerPoolOptionId(sSBMCellsPerPool)
+                LOG.debug "SBM Cells per Library Pool = ${sSBMCellsPerPool}"
+
+                // get plate format which should be 96
+                String sSubmittedPlateFormatOptId = getSBMPlateFormatOptionId(parentContOfCMB)
+
+                // get Combine quadrant which should be 1-4
                 String sCombineQuadrant = Double.valueOf(JiraAPIWrapper.getCFValueByName(parentContOfCMB, ConfigReader.getCFName("COMBINE_QUADRANT"))).toInteger()
+                LOG.debug "Combine quadrant = ${sCombineQuadrant}"
+
+                String submCustomer
+                String sIqcOutcomeOptId
+                String sIqcFeedbackOptId
+//                String iqcAvgConcWells
+                String submDueDate
+
+                // get fields from linked Submission issue
+                Issue submIssue = WorkflowUtils.getSubmissionIssueForContainerId(parentContOfCMB.getId())
+                if(submIssue != null) {
+                    submCustomer = JiraAPIWrapper.getCFValueByName(submIssue, ConfigReader.getCFName("CUSTOMER"))
+                    LOG.debug "Customer = ${submCustomer}"
+                    submDueDate  = submIssue.getDueDate().format('d/MMM/yy')
+                    LOG.debug "Due Date = ${submDueDate}"
+                }
+
+                // get fields from linked IQC issue
+                Issue iqcIssue = WorkflowUtils.getIQCIssueForContainerId(parentContOfCMB.getId())
+                if(iqcIssue != null) {
+                    sIqcOutcomeOptId = getIQCOutcomeOptionId(iqcIssue)
+                    sIqcFeedbackOptId = getIQCFeedbackOptionId(iqcIssue)
+
+//                    iqcAvgConcWells = JiraAPIWrapper.getCFValueByName(iqcIssue, ConfigReader.getCFName("AVERAGE_CONCENTRATION_OF_THE_WELLS"))
+//                    LOG.debug "Avg Concentration wells = ${iqcAvgConcWells}"
+                }
 
                 // add tube to tubeMap:
                 tubesMap[sCombineQuadrant] = [:]
                 tubesMap[sCombineQuadrant]['parent_barcode'] = LIBPlateBarcode
                 tubesMap[sCombineQuadrant]['block_row'] = getRowLtr((Double.valueOf(sCombineQuadrant)).toInteger()) // 'A' to 'D'
                 tubesMap[sCombineQuadrant]['pooled_from_quadrant'] = sCombineQuadrant
+                if(sSubmittedPlateFormatOptId != null) {
+                    tubesMap[sCombineQuadrant]['sbm_plate_format_opt_id'] = sSubmittedPlateFormatOptId
+                }
+                if(sSBMCellsPerPoolOptId != null) {
+                    tubesMap[sCombineQuadrant]['sbm_cells_per_library_pool_opt_id'] = sSBMCellsPerPoolOptId
+                }
+                if(submCustomer != null) {
+                    tubesMap[sCombineQuadrant]['customer'] = submCustomer
+                }
+                if(submDueDate != null) {
+                    tubesMap[sCombineQuadrant]['due_date'] = submDueDate
+                }
+//                if(iqcAvgConcWells != null) {
+//                    tubesMap[sCombineQuadrant]['avg_concentration_wells'] = iqcAvgConcWells
+//                }
+                if(sIqcOutcomeOptId != null) {
+                    tubesMap[sCombineQuadrant]['iqc_outcome_opt_id'] = sIqcOutcomeOptId
+                }
+                if(sIqcFeedbackOptId != null) {
+                    tubesMap[sCombineQuadrant]['iqc_feedback_opt_id'] = sIqcFeedbackOptId
+                }
+                if(sQntAvgSampleConc != null) {
+                    tubesMap[sCombineQuadrant]['qnt_avg_sample_conc'] = sQntAvgSampleConc
+                }
             }
         }
     }

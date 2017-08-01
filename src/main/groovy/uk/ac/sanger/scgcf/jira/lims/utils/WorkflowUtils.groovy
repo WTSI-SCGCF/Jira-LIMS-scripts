@@ -27,6 +27,8 @@ import groovy.util.logging.Slf4j
 import groovy.util.slurpersupport.GPathResult
 import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueLinkTypeName
+import uk.ac.sanger.scgcf.jira.lims.enums.IssueResolutionName
+import uk.ac.sanger.scgcf.jira.lims.enums.IssueStatusName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueTypeName
 import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.LabelTemplates
 import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.PrintLabelAction
@@ -735,17 +737,20 @@ class WorkflowUtils {
      * @param issueInputParameters
      * @return
      */
-    public static Issue createIssue(IssueService issueService, ApplicationUser user, IssueInputParameters issueInputParameters) {
+    public static Issue createIssue(IssueService issueService, ApplicationUser createUser, IssueInputParameters issueInputParameters) {
 
         LOG.debug "Creating a new issue with input parameters:"
         LOG.debug "Summary = ${issueInputParameters.getSummary()}"
 
-//        IssueService issueService = ComponentAccessor.getIssueService()
+        Issue createdIssue = null
 
-        if(user != null) {
-            LOG.debug "Attempting to validate creation of issue using automation user <${user.getName()}>"
+        if(createUser != null) {
+            LOG.debug "Attempting to validate creation of issue using user <${createUser.getName()}>"
 
-            IssueService.CreateValidationResult createValidationResult = issueService.validateCreate(user, issueInputParameters)
+            // N.B. there is a bug here whereby the user you want to create the issue MUST be set as the logged in user first
+            ApplicationUser currUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+            ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(createUser)
+            IssueService.CreateValidationResult createValidationResult = issueService.validateCreate(createUser, issueInputParameters)
 
             if (createValidationResult.isValid()) {
 
@@ -755,17 +760,16 @@ class WorkflowUtils {
                 }
 
                 LOG.debug "Attempting to create issue"
-                IssueService.IssueResult createResult = issueService.create(user, createValidationResult)
+                IssueService.IssueResult createResult = issueService.create(createUser, createValidationResult)
                 if (createResult.isValid()) {
 
-                    Issue newIssue = createResult.getIssue()
-                    LOG.debug "Issue created successfully with summary <${newIssue.getSummary()}> and key <${newIssue.getKey()}>"
+                    createdIssue = createResult.getIssue()
+                    LOG.debug "Issue created successfully with summary <${createdIssue.getSummary()}> and key <${createdIssue.getKey()}>"
 
                     // check for warnings
                     if (createResult.getWarningCollection() != null && createResult.getWarningCollection().hasAnyWarnings()) {
-                        LOG.debug "WARNING: Creation of issue with id <${newIssue.getId().toString()}> was successful but had warnings: {}\n", createResult.getWarningCollection().toString()
+                        LOG.debug "WARNING: Creation of issue with id <${createdIssue.getId().toString()}> was successful but had warnings: {}\n", createResult.getWarningCollection().toString()
                     }
-                    return newIssue
                 } else {
                     // TODO: what to do when failed to create issue? post function so limited options
                     LOG.error "Failed to create issue. Errors:"
@@ -783,11 +787,13 @@ class WorkflowUtils {
                     LOG.debug "WARNING: Creation of issue failed validation with errors: {}\n", createValidationResult.getErrorCollection().toString()
                 }
             }
+            // reset current user
+            ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(currUser)
 
         } else {
             LOG.error "Create issue failed because automationUser was null"
         }
-        null
+        createdIssue
     }
 
     /**
@@ -816,6 +822,166 @@ class WorkflowUtils {
         }
 
         return foundIssueType
+    }
+
+    /**
+     * Get the Submission issue linked to the source issue
+     *
+     * @param sourceContainerId
+     * @return an issue or null if not found
+     */
+    public static Issue getSubmissionIssueForContainerId(Long sourceContainerId) {
+
+        LOG.debug "Getting Submission issue linked to the source container issue with Id = <${sourceContainerId.toString()}>"
+
+        List<Issue> linkedIssues = getSpecifiedLinkedIssues(sourceContainerId, IssueLinkTypeName.GROUP_INCLUDES.toString(), IssueTypeName.SUBMISSION.toString())
+
+        if(linkedIssues == null || linkedIssues.size() <= 0) {
+            LOG.error "No linked Submission issues found"
+            return null
+        }
+
+        // assume only one
+        linkedIssues.get(0)
+
+    }
+
+    /**
+     * Get the IQC issue linked to the source issue
+     *
+     * @param sourceContainerId
+     * @return an issue or null if not found
+     */
+    public static Issue getIQCIssueForContainerId(Long sourceContainerId) {
+
+        LOG.debug "Getting IQC issue linked to the source container issue with Id = <${sourceContainerId.toString()}>"
+
+        List<Issue> linkedIssues = getSpecifiedLinkedIssues(sourceContainerId, IssueLinkTypeName.GROUP_INCLUDES.toString(), IssueTypeName.INPUT_QC.toString())
+
+        if(linkedIssues == null || linkedIssues.size() <= 0) {
+            LOG.error "No linked IQC issues found"
+            return null
+        }
+
+        // could be more than one IQC issue if IQC repeated for plate, get first with correct state / resolution
+        if(linkedIssues.size() > 1) {
+            LOG.debug "Found multiple IQC issues, checking state and resolution"
+            linkedIssues.each { Issue iqcIssue ->
+                // look for state 'IQC Done' and resolution 'Completed'
+                if(iqcIssue.getStatus().getName() == IssueStatusName.IQC_DONE.toString()) {
+                    if(iqcIssue.getResolution().getName() == IssueResolutionName.COMPLETED.toString()) {
+                        return iqcIssue
+                    }
+                }
+            }
+        }
+        linkedIssues.get(0)
+    }
+
+    /**
+     * Get the QNTA issue linked to the source issue
+     *
+     * @param sourceContainerId
+     * @return an issue or null if not found
+     */
+    public static Issue getQuantAnalysisIssueForContainerId(Long sourceContainerId) {
+
+        LOG.debug "Getting QNT Analysis issue linked to the source container issue with Id = <${sourceContainerId.toString()}>"
+
+        List<Issue> linkedIssues = getSpecifiedLinkedIssues(sourceContainerId, IssueLinkTypeName.GROUP_INCLUDES.toString(), IssueTypeName.QUANTIFICATION_ANALYSIS.toString())
+
+        if(linkedIssues == null || linkedIssues.size() <= 0) {
+            LOG.error "No linked Quantification Analysis issues found"
+            return null
+        }
+
+        // could be more than one QNTA issue if Quant repeated for plate, return first with correct state / resolution
+        if(linkedIssues.size() > 1) {
+            LOG.debug "Found multiple QNTA issues, checking state and resolution"
+            linkedIssues.each { Issue qntaIssue ->
+                // look for state 'QNTA Done' and resolution 'Completed'
+                if(qntaIssue.getStatus().getName() == IssueStatusName.QNTA_DONE.toString()) {
+                    if(qntaIssue.getResolution().getName() == IssueResolutionName.COMPLETED.toString()) {
+                        return qntaIssue
+                    }
+                }
+            }
+        }
+        linkedIssues.get(0)
+    }
+
+    /**
+     * Generic method to get linked issues for a source issue with a specific link type and issue type name
+     *
+     * @param sourceIssueId
+     * @param linkTypeName
+     * @param issueTypeName
+     * @return a list of issues
+     */
+    public static List<Issue> getSpecifiedLinkedIssues(Long sourceIssueId, String linkTypeName, String issueTypeName) {
+
+        if(sourceIssueId == null) {
+            LOG.error "ERROR: Source issue null for getSpecifiedLinkedIssues, cannot continue"
+            return null
+        }
+
+        if(linkTypeName == null) {
+            LOG.error "ERROR: Link type name null for getSpecifiedLinkedIssues, cannot continue"
+            return null
+        }
+
+        if(issueTypeName == null) {
+            LOG.error "ERROR: Issue type name null for getSpecifiedLinkedIssues, cannot continue"
+            return null
+        }
+
+        LOG.debug "Looking for linked issues with type <${issueTypeName}> and link type <${linkTypeName}> for source issue with Id = <${sourceIssueId.toString()}>"
+
+        // link type
+        IssueLinkType linkType = getIssueLinkType(linkTypeName)
+        if(linkType == null) {
+            LOG.error "ERROR: Link type null for getSpecifiedLinkedIssues, cannot continue"
+            return null
+        }
+
+        // fetch all the inward links for the source issue
+        List<IssueLink> inwardsLinksList = getInwardLinksListForIssueId(sourceIssueId)
+
+        LOG.debug "Found <${inwardsLinksList.size()}> issues linked to the source container issue"
+
+        List<Issue> contIssueList = []
+
+        // check for linked containers
+        inwardsLinksList.each { IssueLink issLink ->
+
+            // get the source of the link, i.e. the ancestor (or parent) issue
+            Issue curLinkedIssue = issLink.getSourceObject()
+            LOG.debug "Ancestor issue link type name = ${issLink.getIssueLinkType().getName()}"
+
+            // we only want issues linked in the specific way
+            if (issLink.getIssueLinkType() == linkType) {
+
+                // we only want issues of the specified issue type
+                if(issLink.getSourceObject().getIssueType().getName() == issueTypeName) {
+
+                    LOG.debug "Found linked issue with correct link and issue types:"
+                    LOG.debug "Issue type = <${curLinkedIssue.getIssueType().getName()}>"
+                    LOG.debug "Status = <${curLinkedIssue.getStatus().getName()}>"
+                    LOG.debug "Id = <${curLinkedIssue.getId().toString()}>"
+                    LOG.debug "Key = <${curLinkedIssue.getKey()}>"
+                    LOG.debug "Summary = <${curLinkedIssue.getSummary()}>"
+
+                    contIssueList.add(curLinkedIssue)
+                }
+            }
+        }
+        if(contIssueList.size() <= 0) {
+            LOG.warn "Warning: No linked issues of specified type found"
+            return null
+        }
+        LOG.debug "Found <${contIssueList.size()}> issues of specified type linked to source issue"
+        contIssueList
+
     }
 
 }
