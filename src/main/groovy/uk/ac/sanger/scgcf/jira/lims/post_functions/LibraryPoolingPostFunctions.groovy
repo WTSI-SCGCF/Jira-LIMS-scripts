@@ -487,7 +487,6 @@ class LibraryPoolingPostFunctions {
                 String sSubmittedPlateFormatOptId = getSBMPlateFormatOptionId(parentContOfECH)
 
                 String sSubmCustomer
-//                String iqcAvgConcWells
                 String sIqcOutcomeOptId
                 String sIqcFeedbackOptId
                 String sSubmDueDate
@@ -508,9 +507,6 @@ class LibraryPoolingPostFunctions {
                 if(iqcIssue != null) {
                     sIqcOutcomeOptId = getIQCOutcomeOptionId(iqcIssue)
                     sIqcFeedbackOptId = getIQCFeedbackOptionId(iqcIssue)
-
-//                    iqcAvgConcWells = JiraAPIWrapper.getCFValueByName(iqcIssue, ConfigReader.getCFName("AVERAGE_CONCENTRATION_OF_THE_WELLS"))
-//                    LOG.debug "Avg Concentration wells = ${iqcAvgConcWells}"
                 }
 
                 if(sSBMCellsPerPool == '96') {
@@ -535,9 +531,6 @@ class LibraryPoolingPostFunctions {
                         if(sSubmDueDate != null) {
                             tubesMap[sIndx]['due_date'] = sSubmDueDate
                         }
-//                        if(iqcAvgConcWells != null) {
-//                            tubesMap[sIndx]['avg_concentration_wells'] = iqcAvgConcWells
-//                        }
                         if(sIqcOutcomeOptId != null) {
                             tubesMap[sIndx]['iqc_outcome_opt_id'] = sIqcOutcomeOptId
                         }
@@ -571,9 +564,6 @@ class LibraryPoolingPostFunctions {
                     if(sSubmDueDate != null) {
                         tubesMap['1']['due_date'] = sSubmDueDate
                     }
-//                    if(iqcAvgConcWells != null) {
-//                        tubesMap['1']['avg_concentration_wells'] = iqcAvgConcWells
-//                    }
                     if(sIqcOutcomeOptId != null) {
                         tubesMap['1']['iqc_outcome_opt_id'] = sIqcOutcomeOptId
                     }
@@ -647,7 +637,6 @@ class LibraryPoolingPostFunctions {
                 String submCustomer
                 String sIqcOutcomeOptId
                 String sIqcFeedbackOptId
-//                String iqcAvgConcWells
                 String submDueDate
 
                 // get fields from linked Submission issue
@@ -664,9 +653,6 @@ class LibraryPoolingPostFunctions {
                 if(iqcIssue != null) {
                     sIqcOutcomeOptId = getIQCOutcomeOptionId(iqcIssue)
                     sIqcFeedbackOptId = getIQCFeedbackOptionId(iqcIssue)
-
-//                    iqcAvgConcWells = JiraAPIWrapper.getCFValueByName(iqcIssue, ConfigReader.getCFName("AVERAGE_CONCENTRATION_OF_THE_WELLS"))
-//                    LOG.debug "Avg Concentration wells = ${iqcAvgConcWells}"
                 }
 
                 // add tube to tubeMap:
@@ -686,9 +672,6 @@ class LibraryPoolingPostFunctions {
                 if(submDueDate != null) {
                     tubesMap[sCombineQuadrant]['due_date'] = submDueDate
                 }
-//                if(iqcAvgConcWells != null) {
-//                    tubesMap[sCombineQuadrant]['avg_concentration_wells'] = iqcAvgConcWells
-//                }
                 if(sIqcOutcomeOptId != null) {
                     tubesMap[sCombineQuadrant]['iqc_outcome_opt_id'] = sIqcOutcomeOptId
                 }
@@ -705,50 +688,50 @@ class LibraryPoolingPostFunctions {
     /**
      * Helper method to fetch source LIB plate barcodes
      *
-     * @param lpoIssue
-     * @return map of barcodes keyed by position
+     * @param LPOIssue
+     * @return map of barcodes keys with position values
      */
-    private static Map<String, String> getLIBPlateBarcodesMap(Issue lpoIssue) {
+    private static Map<String, String> getLIBPlateBarcodesMap(Issue LPOIssue) {
 
         // fetch common fields from Library Pooling issue
-        int numberOfPlates = Double.valueOf(JiraAPIWrapper.getCFValueByName(lpoIssue, ConfigReader.getCFName("NUMBER_OF_PLATES"))).intValue()
+        int numberOfPlates = Double.valueOf(JiraAPIWrapper.getCFValueByName(LPOIssue, ConfigReader.getCFName("NUMBER_OF_PLATES"))).intValue()
         LOG.debug "Number of plates = ${numberOfPlates}"
 
         Map<String, String> barcodesMap = [:]
 
         if (numberOfPlates > 0) {
             barcodesMap.put(
-                    JiraAPIWrapper.getCFValueByName(lpoIssue, ConfigReader.getCFName("SOURCE_1_BARCODE")),
+                    JiraAPIWrapper.getCFValueByName(LPOIssue, ConfigReader.getCFName("SOURCE_1_BARCODE")),
                     "1"
             )
         }
         if (numberOfPlates > 1) {
             barcodesMap.put(
-                    JiraAPIWrapper.getCFValueByName(lpoIssue, ConfigReader.getCFName("SOURCE_2_BARCODE")),
+                    JiraAPIWrapper.getCFValueByName(LPOIssue, ConfigReader.getCFName("SOURCE_2_BARCODE")),
                     "2"
             )
         }
         if (numberOfPlates > 2) {
             barcodesMap.put(
-                    JiraAPIWrapper.getCFValueByName(lpoIssue, ConfigReader.getCFName("SOURCE_3_BARCODE")),
+                    JiraAPIWrapper.getCFValueByName(LPOIssue, ConfigReader.getCFName("SOURCE_3_BARCODE")),
                     "3"
             )
         }
         if (numberOfPlates > 3) {
             barcodesMap.put(
-                    JiraAPIWrapper.getCFValueByName(lpoIssue, ConfigReader.getCFName("SOURCE_4_BARCODE")),
+                    JiraAPIWrapper.getCFValueByName(LPOIssue, ConfigReader.getCFName("SOURCE_4_BARCODE")),
                     "4"
             )
         }
         if (numberOfPlates > 4) {
             barcodesMap.put(
-                    JiraAPIWrapper.getCFValueByName(lpoIssue, ConfigReader.getCFName("SOURCE_5_BARCODE")),
+                    JiraAPIWrapper.getCFValueByName(LPOIssue, ConfigReader.getCFName("SOURCE_5_BARCODE")),
                     "5"
             )
         }
         if (numberOfPlates > 5) {
             barcodesMap.put(
-                    JiraAPIWrapper.getCFValueByName(lpoIssue, ConfigReader.getCFName("SOURCE_6_BARCODE")),
+                    JiraAPIWrapper.getCFValueByName(LPOIssue, ConfigReader.getCFName("SOURCE_6_BARCODE")),
                     "6"
             )
         }

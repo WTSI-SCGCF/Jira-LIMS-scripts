@@ -5,7 +5,12 @@ import com.atlassian.jira.component.ComponentAccessor
 import com.atlassian.jira.issue.CustomFieldManager
 import com.atlassian.jira.issue.Issue
 import com.atlassian.jira.issue.IssueInputParameters
+import com.atlassian.jira.issue.ModifiedValue
+import com.atlassian.jira.issue.customfields.manager.OptionsManager
+import com.atlassian.jira.issue.customfields.option.Option
+import com.atlassian.jira.issue.customfields.option.Options
 import com.atlassian.jira.issue.fields.CustomField
+import com.atlassian.jira.issue.fields.config.FieldConfig
 import com.atlassian.jira.util.ErrorCollection
 import com.atlassian.jira.util.WarningCollection
 import groovy.util.logging.Slf4j
@@ -143,7 +148,7 @@ class JiraAPIWrapper {
         IssueService issueService = ComponentAccessor.getIssueService()
 
         // locate the custom field for the current issue from its name
-        def tgtField = getCustomFieldManager().getCustomFieldObjects(curIssue).find { it.name == cfName }
+        CustomField tgtField = getCustomFieldManager().getCustomFieldObjects(curIssue).find { it.name == cfName }
         if (tgtField == null) {
             LOG.error "Custom field with name <${cfName}> was not found, cannot set value"
             //TODO: what error handling is required here? maybe should not fail silently?
@@ -185,6 +190,80 @@ class JiraAPIWrapper {
             }
         } else {
             LOG.error "Update validation failed! custom field with name <${cfName}> could not be updated to value <${newValue}>"
+            ErrorCollection errors=updateValidationResult.getErrorCollection();
+            if (errors.hasAnyErrors()) {
+                LOG.error "Errors present"
+                Map<String,String> messages=errors.getErrors();
+                for (      Map.Entry<String,String> message : messages.entrySet()) {
+                    LOG.error(message.getKey() + " : " + message.getValue());
+                }
+            }
+        }
+    }
+
+    // TODO: amalgamate setCF methods and move to WorkflowUtils
+    /**
+     * Set the value of a select custom field given the name of the option
+     *
+     * @param curIssue
+     * @param cfName
+     * @param sOptionName
+     */
+    static void setCFSelectValueByName(Issue curIssue, String cfName, String sOptionName) {
+
+        LOG.debug "Attempting to set customfield value by name"
+        LOG.debug "Issue Id: ${curIssue.getId()}"
+        LOG.debug "Custom field name: ${cfName}"
+        LOG.debug "Option name: ${sOptionName}"
+
+        IssueService issueService = ComponentAccessor.getIssueService()
+
+        // locate the custom field for the current issue from its name
+        CustomField cf = getCustomFieldManager().getCustomFieldObjects(curIssue).find { it.name == cfName }
+        if (cf == null) {
+            LOG.error "Custom field with name <${cfName}> was not found, cannot set option"
+            //TODO: what error handling is required here? maybe should not fail silently?
+            return
+        }
+        LOG.debug "Custom field instance ID : ${cf.getId()}"
+
+        FieldConfig fieldConfig = cf.getRelevantConfig(curIssue)
+        Option option = ComponentAccessor.optionsManager.getOptions(fieldConfig)?.find { it.toString() == sOptionName }
+
+        // update the value of the field and save the change in the database
+        IssueInputParameters issueInputParameters = issueService.newIssueInputParameters()
+        issueInputParameters.addCustomFieldValue(cf.getId(), option.getOptionId().toString())
+
+        IssueService.UpdateValidationResult updateValidationResult = issueService.validateUpdate(WorkflowUtils.getLoggedInUser(), curIssue.getId(), issueInputParameters)
+
+        if (updateValidationResult.isValid()) {
+            LOG.debug "Issue update validation passed, running update"
+            IssueService.IssueResult updateResult = issueService.update(WorkflowUtils.getLoggedInUser(), updateValidationResult);
+            if (updateResult.isValid()) {
+                LOG.debug "Issue updated successfully"
+                if(updateResult.hasWarnings()) {
+                    LOG.debug "Warnings present"
+                    WarningCollection warnings = updateResult.getWarningCollection()
+                    if (warnings.hasAnyWarnings()) {
+                        Collection<String> messages = warnings.getWarnings()
+                        messages.each {String message ->
+                            LOG.debug(message)
+                        }
+                    }
+                }
+            } else {
+                LOG.error "Update failed! Custom field with name <${cfName}> could not be updated to option <${sOptionName}>"
+                ErrorCollection errors=updateResult.getErrorCollection()
+                if (errors.hasAnyErrors()) {
+                    LOG.error "Errors present"
+                    Map<String,String> messages=errors.getErrors()
+                    for (Map.Entry<String,String> message : messages.entrySet()) {
+                        LOG.error(message.getKey() + " : " + message.getValue())
+                    }
+                }
+            }
+        } else {
+            LOG.error "Update validation failed! custom field with name <${cfName}> could not be updated to option <${sOptionName}>"
             ErrorCollection errors=updateValidationResult.getErrorCollection();
             if (errors.hasAnyErrors()) {
                 LOG.error "Errors present"

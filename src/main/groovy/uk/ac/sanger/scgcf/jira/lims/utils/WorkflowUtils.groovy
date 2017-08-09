@@ -984,4 +984,20 @@ class WorkflowUtils {
 
     }
 
+    /**
+     * Generic function to round a number to specified number of digits.
+     * usage: round(yourNumber, 3, BigDecimal.ROUND_HALF_UP)
+     *
+     * @param unrounded
+     * @param precision
+     * @param roundingMode
+     * @return
+     */
+    public static double round(double unrounded, int precision, int roundingMode)
+    {
+        BigDecimal bd = new BigDecimal(unrounded)
+        BigDecimal rounded = bd.setScale(precision, roundingMode)
+        return rounded.doubleValue()
+    }
+
 }
