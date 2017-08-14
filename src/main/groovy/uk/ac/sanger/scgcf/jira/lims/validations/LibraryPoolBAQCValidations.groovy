@@ -137,9 +137,12 @@ class LibraryPoolBAQCValidations {
             LOG.debug "Barcode = ${sBarcode}"
             if(sSampleName != sBarcode) {
                 LOG.error "Name of the sample <${sSampleName}> at position ${sTubeNumber} in the BioAnalyser XML does not match JIRA source ${sTubeNumber} barcode <${sBarcode}>"
-                throw new InvalidInputException("The name of the sample <${sSampleName}> at position ${sTubeNumber} in the BioAnalyser XML does not match JIRA source ${sTubeNumber} barcode <${sBarcode}>, please correct and try again.")
+                throw new InvalidInputException("The name of the sample <${sSampleName}> at position ${sTubeNumber} in the BioAnalyser XML does not match JIRA source ${sTubeNumber} barcode <${sBarcode}>, please check you are uploading the correct XML and the order of samples matches and try again or cancel.")
             }
         }
+
+        // TODO: could add a check that sample 12 (key 11) name is 'Ladder'
+
         LOG.debug "XML looks valid, and Sample names match Barcodes in JIRA"
     }
 

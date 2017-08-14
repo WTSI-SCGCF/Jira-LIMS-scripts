@@ -229,10 +229,11 @@ class LibraryPoolBAQCPostFunctions {
                                         "concentration"   : sConc,
                                         "fragmentsize"    : sFragSize,
                                         "percent_total"   : sPercentTotalDNA,
+                                        "sbm_plate_format": sSBMPltFormat,
                                         "iqc_outcome"     : sIQCOutcome,
                                         "iqc_feedback"    : sIQCFeedback,
-                                        "qnt_avg_conc"    : sQNTAvgConc,
-                                        "sbm_plate_format": sSBMPltFormat
+                                        "qnt_avg_conc"    : sQNTAvgConc
+
                                 ]
                             } else {
                                 LOG.error "Failed to fetch tube issue for barcode <${sTubeBarcode}> when parsing XML."
@@ -286,10 +287,10 @@ class LibraryPoolBAQCPostFunctions {
         wikiSB <<= '|| Conc ' + '\\\\ ' + '(nM)'
         wikiSB <<= '|| Avg ' + '\\\\ ' + 'Fragment ' + '\\\\ ' + 'Size (bp)'
         wikiSB <<= '|| % Total ' + '\\\\ ' + 'DNA'
+        wikiSB <<= '|| SBM Plt ' + '\\\\ ' + 'Format'
         wikiSB <<= '|| IQC ' + '\\\\ ' + 'Outcome'
         wikiSB <<= '|| IQC ' + '\\\\ ' + 'Feedback'
         wikiSB <<= '|| QNT Avg' + '\\\\' + 'Sample ' + '\\\\ ' + 'Conc (ng/&mu;l)'
-        wikiSB <<= '|| SBM Plt ' + '\\\\ ' + 'Format'
         wikiSB <<= '||'
         wikiSB <<= System.getProperty("line.separator")
 
@@ -310,10 +311,11 @@ class LibraryPoolBAQCPostFunctions {
                 wikiSB <<= '| ' + resultsMap[sRow]['concentration']
                 wikiSB <<= '| ' + resultsMap[sRow]['fragmentsize']
                 wikiSB <<= '| ' + resultsMap[sRow]['percent_total']
+                wikiSB <<= '| ' + resultsMap[sRow]['sbm_plate_format']
                 wikiSB <<= '| ' + resultsMap[sRow]['iqc_outcome']
                 wikiSB <<= '| ' + resultsMap[sRow]['iqc_feedback']
                 wikiSB <<= '| ' + resultsMap[sRow]['qnt_avg_conc']
-                wikiSB <<= '| ' + resultsMap[sRow]['sbm_plate_format']
+
             } else {
                 wikiSB <<= '|| ' + sRow
                 wikiSB <<= '| | | | | | | | '
