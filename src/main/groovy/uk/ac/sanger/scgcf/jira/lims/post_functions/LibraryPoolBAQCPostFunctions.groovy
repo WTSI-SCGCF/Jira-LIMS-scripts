@@ -213,6 +213,7 @@ class LibraryPoolBAQCPostFunctions {
                                 JiraAPIWrapper.setCFValueByName(curTubeIssue, ConfigReader.getCFName("LIBRARY_QC_CONCENTRATION"), sConc)
                                 JiraAPIWrapper.setCFValueByName(curTubeIssue, ConfigReader.getCFName("LIBRARY_QC_AVERAGE_FRAGMENT_SIZE"), sFragSize)
                                 JiraAPIWrapper.setCFValueByName(curTubeIssue, ConfigReader.getCFName("LIBRARY_QC_PERCENT_TOTAL_DNA"), sPercentTotalDNA)
+                                JiraAPIWrapper.setCFValueByName(curTubeIssue, ConfigReader.getCFName("LIBRARY_QC_CHIP_POSITION"), sTubeNumber)
 
                                 // get CF values for 'IQC Outcome', 'IQC Feedback' (may be null), 'Average Sample Concentration' and "Plate Format" and add to map
                                 String sIQCOutcome = JiraAPIWrapper.getCFValueByName(curTubeIssue, ConfigReader.getCFName("IQC_OUTCOME"))

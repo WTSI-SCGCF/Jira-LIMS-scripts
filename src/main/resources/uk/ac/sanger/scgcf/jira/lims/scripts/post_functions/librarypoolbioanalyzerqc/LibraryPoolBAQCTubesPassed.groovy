@@ -21,7 +21,7 @@ Issue curIssue = issue
 LOG.debug "Post-function for declaring source LPL tubes that passed BA QC"
 
 // fetch the array of selected plates from the nFeed custom field
-String cfAlias = "CURRENT_LIBRARY_POOL_TUBES_IN_PROGRESS"
+String cfAlias = "CURRENT_LIBRARY_POOL_TUBES_IN_PROGRESS_BA_QC"
 
 ArrayList<String> LPLTubeIds = WorkflowUtils.getIssueIdsFromNFeedField(curIssue, cfAlias)
 

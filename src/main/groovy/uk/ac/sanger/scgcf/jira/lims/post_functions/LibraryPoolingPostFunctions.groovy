@@ -140,7 +140,7 @@ class LibraryPoolingPostFunctions {
     private static Map<String, Object> createTubesForLibraryPlate(Issue LPOIssue, Issue LIBPlateIssue, Map<String, String> libBarcodesMap) {
 
         // Create tubes map to hold results
-        Map<String, Object> tubesMap = [:]
+        Map<String, Object> LIBPlateTubesMap = [:]
 
         // get barcode of LIB plate
         String sLIBPlateBarcode = JiraAPIWrapper.getCFValueByName(LIBPlateIssue, ConfigReader.getCFName("BARCODE"))
@@ -149,38 +149,40 @@ class LibraryPoolingPostFunctions {
         // determine block column
         if(libBarcodesMap.containsKey(sLIBPlateBarcode)) {
 
+            // fetch which source number this LIB plate is within the LPO issue
             String sBlockCol = libBarcodesMap[sLIBPlateBarcode]
-            tubesMap["block_column"] = sBlockCol
+            LOG.debug "sBlockCol = ${sBlockCol}"
+            LIBPlateTubesMap["block_column"] = sBlockCol
 
-            processParentsOfLIB(LIBPlateIssue, tubesMap, sLIBPlateBarcode)
-            if(!tubesMap.containsKey('number_of_tubes')) {
+            processParentsOfLIB(LIBPlateIssue, LIBPlateTubesMap, sLIBPlateBarcode)
+            if(!LIBPlateTubesMap.containsKey('number_of_tubes')) {
                 LOG.error "ERROR: Failed to determine number of library tubes, cannot continue"
                 return
             }
 
             LOG.debug "Tubes map after back from checking LIB parents:"
-            int numBarcodesReqd = (int)tubesMap['number_of_tubes']
+            int numBarcodesReqd = (int)LIBPlateTubesMap['number_of_tubes']
 
             LOG.debug "Number of barcodes required = ${Integer.toString(numBarcodesReqd)}"
-            LOG.debug tubesMap.toMapString()
+            LOG.debug LIBPlateTubesMap.toMapString()
 
             // generate barcodes:
             List<String> barcodesList = generateBarcodesForTubes(numBarcodesReqd)
             (1..numBarcodesReqd).each { int indx ->
                 String sIndx = Integer.toString(indx)
-                tubesMap[sIndx]['barcode'] = barcodesList.pop()
+                LIBPlateTubesMap[sIndx]['barcode'] = barcodesList.pop()
             }
 
-            // print the content of tubesMap to debug
+            // print the content of LIBPlateTubesMap to debug
             LOG.debug "Tubes map after barcode generation:"
-            LOG.debug tubesMap.toMapString()
+            LOG.debug LIBPlateTubesMap.toMapString()
 
             // create LPL tube issues
             Map<String, Object> tubeIssuesMap = ['num_tube_issues':0]
-            int iNumTubes = Integer.valueOf(tubesMap['number_of_tubes'].toString())
+            int iNumTubes = Integer.valueOf(LIBPlateTubesMap['number_of_tubes'].toString())
             (1..iNumTubes).each { int indx ->
                 String sIndx = Integer.toString(indx)
-                Issue tubeIssue = createLPLTubeIssue(tubesMap, sIndx)
+                Issue tubeIssue = createLPLTubeIssue(LIBPlateTubesMap, sIndx)
                 if(tubeIssue == null) {
                     LOG.error "ERROR: tube creation failed and returned null"
                 } else {
@@ -222,7 +224,7 @@ class LibraryPoolingPostFunctions {
                 }
             }
 
-            return tubesMap
+            return LIBPlateTubesMap
         } else {
             LOG.error "ERROR: Did not find LIB plate barcode <${sLIBPlateBarcode}> in barcodes map"
             return null
@@ -241,6 +243,8 @@ class LibraryPoolingPostFunctions {
     private static Issue createLPLTubeIssue(Map<String, Object> tubesMap, String sTubeIndx) {
 
         LOG.debug "In create LPL tube issue method"
+        LOG.debug "sTubeIndx = ${sTubeIndx}"
+        LOG.debug "tubesMap = ${tubesMap.toMapString()}"
         ApplicationUser automationUser = WorkflowUtils.getAutomationUser()
 
         IssueService issueService = ComponentAccessor.getIssueService()
@@ -260,10 +264,13 @@ class LibraryPoolingPostFunctions {
         if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("barcode")) {
             issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("BARCODE"), tubesMap[sTubeIndx]["barcode"].toString())
         }
+        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("parent_barcode")) {
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("SOURCE_LIB_PLATE"), tubesMap[sTubeIndx]["parent_barcode"].toString())
+        }
         if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("block_row")) {
             issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("POOLING_BLOCK_ROW"), tubesMap[sTubeIndx]["block_row"].toString())
         }
-        if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("block_column")) {
+        if((tubesMap).containsKey("block_column")) {
             issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("POOLING_BLOCK_COLUMN"), tubesMap["block_column"].toString())
         }
         if(((Map<String,String>)tubesMap[sTubeIndx]).containsKey("pooled_from_quadrant")) {
@@ -913,10 +920,6 @@ class LibraryPoolingPostFunctions {
                     LIBIssuesMap[sBlockCol] = linkedContainer
 
                 }
-            } else {
-                LOG.warn "Unexpected container issue type connected to Library Pooling issue with Id <${LPOIssue.getId()}>:"
-                LOG.warn "Id = <${linkedContainer.getId().toString()}>"
-                LOG.warn "Key = <${linkedContainer.getKey()}>"
             }
         }
 
