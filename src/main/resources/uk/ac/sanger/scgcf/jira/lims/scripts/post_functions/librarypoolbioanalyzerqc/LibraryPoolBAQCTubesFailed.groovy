@@ -8,6 +8,8 @@ import uk.ac.sanger.scgcf.jira.lims.post_functions.LibraryPoolBAQCPostFunctions
 import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
 
 /**
+ * Set the tubes that have failed BioAnalyzer QC.
+ *
  * Created by as28 on 03/08/2017.
  */
 

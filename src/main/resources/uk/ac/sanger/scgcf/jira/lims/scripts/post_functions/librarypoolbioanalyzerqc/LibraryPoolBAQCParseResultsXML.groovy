@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory
 import uk.ac.sanger.scgcf.jira.lims.post_functions.LibraryPoolBAQCPostFunctions
 
 /**
+ * Parse the BioAnalyzer XML results file and extract the Library Pool sample values.
+ *
  * Created by as28 on 03/08/2017.
  */
 

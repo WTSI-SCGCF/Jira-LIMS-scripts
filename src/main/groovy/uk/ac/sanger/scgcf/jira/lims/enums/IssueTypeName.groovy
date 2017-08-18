@@ -29,9 +29,9 @@ enum IssueTypeName {
     STUDY("Study"),
     SUBMISSION("Submission"),
     TUBE_LPL("Tube LPL"),
-    TUBE_PPL("Tube NPL"),
+    TUBE_PPL("Tube PPL"),
     TUBE_IPL("Tube IPL"),
-    TUBE_NPL("Tube PPL")
+    TUBE_NPL("Tube NPL")
 
     String issueTypeName
 

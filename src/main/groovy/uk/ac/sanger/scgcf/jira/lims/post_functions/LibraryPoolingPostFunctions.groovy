@@ -363,96 +363,96 @@ class LibraryPoolingPostFunctions {
 
     }
 
-    /**
-     * Get the IQC Outcome option Id value given the issue
-     *
-     * @param iqcIssue
-     * @return
-     */
-    private static String getIQCOutcomeOptionId(Issue iqcIssue) {
-
-        String sIqcOutcomeOptId
-        String sIqcOutcome = JiraAPIWrapper.getCFValueByName(iqcIssue, ConfigReader.getCFName("IQC_OUTCOME"))
-        LOG.debug "IQC Outcome = ${sIqcOutcome}"
-        if(sIqcOutcome == 'Pass') {
-            sIqcOutcomeOptId = SelectOptionId.IQC_OUTCOME_PASS.toString()
-        } else if(sIqcOutcome == 'Fail') {
-            sIqcOutcomeOptId = SelectOptionId.IQC_OUTCOME_FAIL.toString()
-        } else {
-            sIqcOutcomeOptId = '-1'
-        }
-        LOG.debug "IQC Outcome option Id = ${sIqcOutcomeOptId}"
-        sIqcOutcomeOptId
-
-    }
-
-    /**
-     * Get the IQC Feedback option Id value given the issue
-     *
-     * @param iqcIssue
-     * @return
-     */
-    private static String getIQCFeedbackOptionId(Issue iqcIssue) {
-
-        String sIqcFeedbackOptId
-        String sIqcFeedback = JiraAPIWrapper.getCFValueByName(iqcIssue, ConfigReader.getCFName("IQC_FEEDBACK"))
-        LOG.debug "IQC Feedback = ${sIqcFeedback}"
-        if(sIqcFeedback == 'Pass') {
-            sIqcFeedbackOptId = SelectOptionId.IQC_FEEDBACK_PASS.toString()
-        } else if(sIqcFeedback == 'Fail') {
-            sIqcFeedbackOptId = SelectOptionId.IQC_FEEDBACK_FAIL.toString()
-        } else {
-            sIqcFeedbackOptId = '-1'
-        }
-        LOG.debug "IQC Feedback option Id = ${sIqcFeedbackOptId}"
-        sIqcFeedbackOptId
-
-    }
-
-    /**
-     * Get the SBM Cells per Library Pool option Id value given the issue
-     *
-     * @param iqcIssue
-     * @return
-     */
-    private static String getSBMCellsPerPoolOptionId(String sSBMCellsPerPool) {
-
-        String sSBMCellsPerPoolOptId
-        LOG.debug "SBM Cells per Library Pool = ${sSBMCellsPerPool}"
-        if(sSBMCellsPerPool == '96') {
-            sSBMCellsPerPoolOptId = SelectOptionId.SBM_CELLS_PER_LIBRARY_POOL_96.toString()
-        } else if(sSBMCellsPerPool == '384') {
-            sSBMCellsPerPoolOptId = SelectOptionId.SBM_CELLS_PER_LIBRARY_POOL_384.toString()
-        } else {
-            sSBMCellsPerPoolOptId = '-1'
-        }
-        LOG.debug "SBM Cells per Library Pool option Id = ${sSBMCellsPerPoolOptId}"
-        sSBMCellsPerPoolOptId
-
-    }
-
-    /**
-     * Get the SBM Plate Format option Id value given the issue
-     *
-     * @param iqcIssue
-     * @return
-     */
-    private static String getSBMPlateFormatOptionId(Issue sbmIssue) {
-
-        String sSBMPlateFormatOptId
-        String sSBMPlateFormat = JiraAPIWrapper.getCFValueByName(sbmIssue, ConfigReader.getCFName("PLATE_FORMAT"))
-        LOG.debug "SBM Plate Format = ${sSBMPlateFormat}"
-        if(sSBMPlateFormat == '96') {
-            sSBMPlateFormatOptId = SelectOptionId.SBM_PLATE_FORMAT_96.toString()
-        } else if(sSBMPlateFormat == '384') {
-            sSBMPlateFormatOptId = SelectOptionId.SBM_PLATE_FORMAT_384.toString()
-        } else {
-            sSBMPlateFormatOptId = '-1'
-        }
-        LOG.debug "SBM Plate Format option Id = ${sSBMPlateFormatOptId}"
-        sSBMPlateFormatOptId
-
-    }
+//    /**
+//     * Get the IQC Outcome option Id value given the issue
+//     *
+//     * @param iqcIssue
+//     * @return
+//     */
+//    private static String getIQCOutcomeOptionId(Issue iqcIssue) {
+//
+//        String sIqcOutcomeOptId
+//        String sIqcOutcome = JiraAPIWrapper.getCFValueByName(iqcIssue, ConfigReader.getCFName("IQC_OUTCOME"))
+//        LOG.debug "IQC Outcome = ${sIqcOutcome}"
+//        if(sIqcOutcome == 'Pass') {
+//            sIqcOutcomeOptId = SelectOptionId.IQC_OUTCOME_PASS.toString()
+//        } else if(sIqcOutcome == 'Fail') {
+//            sIqcOutcomeOptId = SelectOptionId.IQC_OUTCOME_FAIL.toString()
+//        } else {
+//            sIqcOutcomeOptId = '-1'
+//        }
+//        LOG.debug "IQC Outcome option Id = ${sIqcOutcomeOptId}"
+//        sIqcOutcomeOptId
+//
+//    }
+//
+//    /**
+//     * Get the IQC Feedback option Id value given the issue
+//     *
+//     * @param iqcIssue
+//     * @return
+//     */
+//    private static String getIQCFeedbackOptionId(Issue iqcIssue) {
+//
+//        String sIqcFeedbackOptId
+//        String sIqcFeedback = JiraAPIWrapper.getCFValueByName(iqcIssue, ConfigReader.getCFName("IQC_FEEDBACK"))
+//        LOG.debug "IQC Feedback = ${sIqcFeedback}"
+//        if(sIqcFeedback == 'Pass') {
+//            sIqcFeedbackOptId = SelectOptionId.IQC_FEEDBACK_PASS.toString()
+//        } else if(sIqcFeedback == 'Fail') {
+//            sIqcFeedbackOptId = SelectOptionId.IQC_FEEDBACK_FAIL.toString()
+//        } else {
+//            sIqcFeedbackOptId = '-1'
+//        }
+//        LOG.debug "IQC Feedback option Id = ${sIqcFeedbackOptId}"
+//        sIqcFeedbackOptId
+//
+//    }
+//
+//    /**
+//     * Get the SBM Cells per Library Pool option Id value given the issue
+//     *
+//     * @param iqcIssue
+//     * @return
+//     */
+//    private static String getSBMCellsPerPoolOptionId(String sSBMCellsPerPool) {
+//
+//        String sSBMCellsPerPoolOptId
+//        LOG.debug "SBM Cells per Library Pool = ${sSBMCellsPerPool}"
+//        if(sSBMCellsPerPool == '96') {
+//            sSBMCellsPerPoolOptId = SelectOptionId.SBM_CELLS_PER_LIBRARY_POOL_96.toString()
+//        } else if(sSBMCellsPerPool == '384') {
+//            sSBMCellsPerPoolOptId = SelectOptionId.SBM_CELLS_PER_LIBRARY_POOL_384.toString()
+//        } else {
+//            sSBMCellsPerPoolOptId = '-1'
+//        }
+//        LOG.debug "SBM Cells per Library Pool option Id = ${sSBMCellsPerPoolOptId}"
+//        sSBMCellsPerPoolOptId
+//
+//    }
+//
+//    /**
+//     * Get the SBM Plate Format option Id value given the issue
+//     *
+//     * @param iqcIssue
+//     * @return
+//     */
+//    private static String getSBMPlateFormatOptionId(Issue sbmIssue) {
+//
+//        String sSBMPlateFormatOptId
+//        String sSBMPlateFormat = JiraAPIWrapper.getCFValueByName(sbmIssue, ConfigReader.getCFName("PLATE_FORMAT"))
+//        LOG.debug "SBM Plate Format = ${sSBMPlateFormat}"
+//        if(sSBMPlateFormat == '96') {
+//            sSBMPlateFormatOptId = SelectOptionId.SBM_PLATE_FORMAT_96.toString()
+//        } else if(sSBMPlateFormat == '384') {
+//            sSBMPlateFormatOptId = SelectOptionId.SBM_PLATE_FORMAT_384.toString()
+//        } else {
+//            sSBMPlateFormatOptId = '-1'
+//        }
+//        LOG.debug "SBM Plate Format option Id = ${sSBMPlateFormatOptId}"
+//        sSBMPlateFormatOptId
+//
+//    }
 
     /**
      * Identify the parent SS2, DNA or CMB plate for the ECH plate, and determine how many tubes are
@@ -630,12 +630,10 @@ class LibraryPoolingPostFunctions {
                 tubesMap['number_of_tubes'] += 1
 
                 // get cells per pool which should be 96 or 384
-                String sSBMCellsPerPool = JiraAPIWrapper.getCFValueByName(parentContOfCMB, ConfigReader.getCFName("CELLS_PER_LIBRARY_POOL"))
-                String sSBMCellsPerPoolOptId = getSBMCellsPerPoolOptionId(sSBMCellsPerPool)
-                LOG.debug "SBM Cells per Library Pool = ${sSBMCellsPerPool}"
+                String sSBMCellsPerPoolOptId = WorkflowUtils.getSBMCellsPerPoolOptionId(parentContOfCMB)
 
                 // get plate format which should be 96
-                String sSubmittedPlateFormatOptId = getSBMPlateFormatOptionId(parentContOfCMB)
+                String sSubmittedPlateFormatOptId = WorkflowUtils.getSBMPlateFormatOptionId(parentContOfCMB)
 
                 // get Combine quadrant which should be 1-4
                 String sCombineQuadrant = Double.valueOf(JiraAPIWrapper.getCFValueByName(parentContOfCMB, ConfigReader.getCFName("COMBINE_QUADRANT"))).toInteger()
@@ -658,8 +656,8 @@ class LibraryPoolingPostFunctions {
                 // get fields from linked IQC issue
                 Issue iqcIssue = WorkflowUtils.getIQCIssueForContainerId(parentContOfCMB.getId())
                 if(iqcIssue != null) {
-                    sIqcOutcomeOptId = getIQCOutcomeOptionId(iqcIssue)
-                    sIqcFeedbackOptId = getIQCFeedbackOptionId(iqcIssue)
+                    sIqcOutcomeOptId = WorkflowUtils.getIQCOutcomeOptionId(iqcIssue)
+                    sIqcFeedbackOptId = WorkflowUtils.getIQCFeedbackOptionId(iqcIssue)
                 }
 
                 // add tube to tubeMap:
@@ -853,7 +851,7 @@ class LibraryPoolingPostFunctions {
      * Generate a number of barcodes for the tubes
      *
      * @param numBarcodesReqd
-     * @return
+     * @return list of barcode strings
      */
     private static List<String> generateBarcodesForTubes(int numBarcodesReqd) {
 

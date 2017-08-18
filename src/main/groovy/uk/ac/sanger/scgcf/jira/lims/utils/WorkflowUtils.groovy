@@ -30,6 +30,7 @@ import uk.ac.sanger.scgcf.jira.lims.enums.IssueLinkTypeName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueResolutionName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueStatusName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueTypeName
+import uk.ac.sanger.scgcf.jira.lims.enums.SelectOptionId
 import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.LabelTemplates
 import uk.ac.sanger.scgcf.jira.lims.post_functions.labelprinting.PrintLabelAction
 import uk.ac.sanger.scgcf.jira.lims.service_wrappers.JiraAPIWrapper
@@ -999,5 +1000,121 @@ class WorkflowUtils {
         BigDecimal rounded = bd.setScale(precision, roundingMode)
         return rounded.doubleValue()
     }
+
+    /**
+     * Get the IQC Outcome option Id value given the issue
+     *
+     * @param curIssue
+     * @return
+     */
+    public static String getIQCOutcomeOptionId(Issue curIssue) {
+
+        String sIqcOutcomeOptId
+        String sIqcOutcome = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("IQC_OUTCOME"))
+        LOG.debug "IQC Outcome = ${sIqcOutcome}"
+        if(sIqcOutcome == 'Pass') {
+            sIqcOutcomeOptId = SelectOptionId.IQC_OUTCOME_PASS.toString()
+        } else if(sIqcOutcome == 'Fail') {
+            sIqcOutcomeOptId = SelectOptionId.IQC_OUTCOME_FAIL.toString()
+        } else {
+            sIqcOutcomeOptId = '-1'
+        }
+        LOG.debug "IQC Outcome option Id = ${sIqcOutcomeOptId}"
+        sIqcOutcomeOptId
+
+    }
+
+    /**
+     * Get the IQC Feedback option Id value given the issue
+     *
+     * @param curIssue
+     * @return
+     */
+    public static String getIQCFeedbackOptionId(Issue curIssue) {
+
+        String sIqcFeedbackOptId
+        String sIqcFeedback = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("IQC_FEEDBACK"))
+        LOG.debug "IQC Feedback = ${sIqcFeedback}"
+        if(sIqcFeedback == 'Pass') {
+            sIqcFeedbackOptId = SelectOptionId.IQC_FEEDBACK_PASS.toString()
+        } else if(sIqcFeedback == 'Fail') {
+            sIqcFeedbackOptId = SelectOptionId.IQC_FEEDBACK_FAIL.toString()
+        } else {
+            sIqcFeedbackOptId = '-1'
+        }
+        LOG.debug "IQC Feedback option Id = ${sIqcFeedbackOptId}"
+        sIqcFeedbackOptId
+
+    }
+
+    /**
+     * Get the SBM Cells per Library Pool option Id value given the issue
+     *
+     * @param iqcIssue
+     * @return
+     */
+    public static String getSBMCellsPerPoolOptionId(Issue curIssue) {
+
+        String sSBMCellsPerPoolOptId
+        String sSBMCellsPerPool = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("CELLS_PER_LIBRARY_POOL"))
+        LOG.debug "SBM Cells per Library Pool = ${sSBMCellsPerPool}"
+        if(sSBMCellsPerPool == '96') {
+            sSBMCellsPerPoolOptId = SelectOptionId.SBM_CELLS_PER_LIBRARY_POOL_96.toString()
+        } else if(sSBMCellsPerPool == '384') {
+            sSBMCellsPerPoolOptId = SelectOptionId.SBM_CELLS_PER_LIBRARY_POOL_384.toString()
+        } else {
+            sSBMCellsPerPoolOptId = '-1'
+        }
+        LOG.debug "SBM Cells per Library Pool option Id = ${sSBMCellsPerPoolOptId}"
+        sSBMCellsPerPoolOptId
+
+    }
+
+    /**
+     * Get the SBM Plate Format option Id value given the issue
+     *
+     * @param iqcIssue
+     * @return
+     */
+    public static String getSBMPlateFormatOptionId(Issue curIssue) {
+
+        String sSBMPlateFormatOptId
+        String sSBMPlateFormat = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("PLATE_FORMAT"))
+        LOG.debug "SBM Plate Format = ${sSBMPlateFormat}"
+        if(sSBMPlateFormat == '96') {
+            sSBMPlateFormatOptId = SelectOptionId.SBM_PLATE_FORMAT_96.toString()
+        } else if(sSBMPlateFormat == '384') {
+            sSBMPlateFormatOptId = SelectOptionId.SBM_PLATE_FORMAT_384.toString()
+        } else {
+            sSBMPlateFormatOptId = '-1'
+        }
+        LOG.debug "SBM Plate Format option Id = ${sSBMPlateFormatOptId}"
+        sSBMPlateFormatOptId
+
+    }
+
+    /**
+     * Get the LQC Outcome option Id value given the issue
+     *
+     * @param curIssue
+     * @return
+     */
+    public static String getLQCOutcomeOptionId(Issue curIssue) {
+
+        String sLQCOutcomeOptId
+        String sLQCOutcome = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("LQC_OUTCOME"))
+        LOG.debug "LQC Outcome = ${sLQCOutcome}"
+        if(sLQCOutcome == 'Pass') {
+            sLQCOutcomeOptId = SelectOptionId.LQC_OUTCOME_PASS.toString()
+        } else if(sLQCOutcome == 'Fail') {
+            sLQCOutcomeOptId = SelectOptionId.LQC_OUTCOME_FAIL.toString()
+        } else {
+            sLQCOutcomeOptId = '-1'
+        }
+        LOG.debug "LQC Outcome option Id = ${sLQCOutcomeOptId}"
+        sLQCOutcomeOptId
+
+    }
+
 
 }
