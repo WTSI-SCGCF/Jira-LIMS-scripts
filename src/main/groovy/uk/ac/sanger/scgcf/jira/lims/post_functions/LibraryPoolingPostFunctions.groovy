@@ -764,7 +764,6 @@ class LibraryPoolingPostFunctions {
         wikiSB <<= '|| '
         (1..6).each { int iPltIndx ->
             String sPltIndx = Integer.toString(iPltIndx)
-            System.out.println("header col = ${iPltIndx}")
             if(blockMap.containsKey(sPltIndx)) {
                 // NB. the same 'parent_barcode' is present in all tubes in each plate index, so we can just take the 1st for this header
                 String sParentBC = blockMap[sPltIndx]['1']['parent_barcode']

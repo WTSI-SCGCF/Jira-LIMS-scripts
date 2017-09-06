@@ -4,14 +4,18 @@ import com.atlassian.jira.bc.issue.IssueService
 import com.atlassian.jira.component.ComponentAccessor
 import com.atlassian.jira.issue.Issue
 import com.atlassian.jira.issue.IssueInputParameters
+import com.atlassian.jira.issue.MutableIssue
 import com.atlassian.jira.user.ApplicationUser
 import groovy.util.logging.Slf4j
 import uk.ac.sanger.scgcf.jira.lims.configurations.ConfigReader
 import uk.ac.sanger.scgcf.jira.lims.enums.BarcodeInfos
 import uk.ac.sanger.scgcf.jira.lims.enums.BarcodePrefixes
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueLinkTypeName
+import uk.ac.sanger.scgcf.jira.lims.enums.IssueStatusName
 import uk.ac.sanger.scgcf.jira.lims.enums.IssueTypeName
 import uk.ac.sanger.scgcf.jira.lims.enums.ProjectName
+import uk.ac.sanger.scgcf.jira.lims.enums.TransitionName
+import uk.ac.sanger.scgcf.jira.lims.enums.WorkflowName
 import uk.ac.sanger.scgcf.jira.lims.service_wrappers.JiraAPIWrapper
 import uk.ac.sanger.scgcf.jira.lims.services.DummyBarcodeGenerator
 import uk.ac.sanger.scgcf.jira.lims.utils.WorkflowUtils
@@ -46,7 +50,7 @@ class LibraryPoolPreNormPostFunctions {
 
         if (listPPLBarcodes == null || listPPLBarcodes.size() != iNumTubes) {
             LOG.error "List of barcodes for PPL tubes is not the expected size <${Integer.toString(iNumTubes)}>"
-            return
+            return null
         }
 
         LOG.debug "List of barcodes for PPL tubes:"
@@ -54,13 +58,13 @@ class LibraryPoolPreNormPostFunctions {
 
         (1..iNumTubes).each { int iIndx ->
             String sTubeIndx = Integer.toString(iIndx)
-            String sPPLTubeBarcode = listPPLBarcodes.get(iIndx - 1)
+            String sPPLTubeBarcode = listPPLBarcodes.pop()
 
             // store barcode in main map
             tubesMap[sTubeIndx]['dest_bc'] = sPPLTubeBarcode
 
             // set destination custom field on PNM issue
-            String cfAlias = "SOURCE_" + sTubeIndx + "_BARCODE"
+            String cfAlias = "DESTINATION_" + sTubeIndx + "_BARCODE"
             JiraAPIWrapper.setCFValueByName(PNMIssue, ConfigReader.getCFName(cfAlias), sPPLTubeBarcode)
 
             // get the LPL issue by barcode
@@ -78,13 +82,25 @@ class LibraryPoolPreNormPostFunctions {
             Issue PPLIssue = createPPLTubeIssue(tubesMap, sTubeIndx)
             listPPLIds.push(Long.toString(PPLIssue.getId()))
 
-            // link the LPL issue to the PPL issue with a 'Relationships' 'is a parent to' link
+            // link the LPL tube issue to the PPL tube issue with a 'Relationships' 'is a parent to' link
             LOG.debug "Attempting to create an issue link between the source LPL tube and destination PPL tube <${sTubeIndx}>"
             WorkflowUtils.createIssueLink(LPLIssue.getId(), PPLIssue.getId(), IssueLinkTypeName.RELATIONSHIPS.getLinkTypeName())
 
             // link PNM issue to the PPL tube issue with a 'Group includes' 'includes containers' link
             LOG.debug "Attempting to create an issue link between the PNM group issue and destination PPL tube <${sTubeIndx}>"
             WorkflowUtils.createIssueLink(PNMIssue.getId(), PPLIssue.getId(), IssueLinkTypeName.GROUP_INCLUDES.getLinkTypeName())
+
+            // transition the tube to 'TubPPL In Pre-Norm' via 'Start pre-normalisation'
+            int transitionId = ConfigReader.getTransitionActionId(
+                    WorkflowName.TUBE_PPL.toString(), TransitionName.PPL_START_PRE_NORMALISATION.toString()
+            )
+
+            if(transitionId > 0) {
+                LOG.debug "Attempting to transition PPL to 'In Pre-Norm'"
+                WorkflowUtils.transitionIssue(PPLIssue.getId(), transitionId, "Automatically transitioned during Library Pre-Normalisation print PPL labels")
+            } else {
+                LOG.error "ERROR: Transition id not found, cannot transition PPL tube with Key <${PPLIssue.getKey()}>"
+            }
 
         }
 
@@ -187,11 +203,13 @@ class LibraryPoolPreNormPostFunctions {
      * @param tubesMap
      * @param sTubeIndx
      */
-    private static void calculateDilutionsForLPLTube(tubesMap, sTubeIndx) {
+    private static void calculateDilutionsForLPLTube(Map<String, Map<String, String>> tubesMap, String sTubeIndx) {
+
+        LOG.debug "Attempting to calculate dilutions for tube with barcode <${tubesMap[sTubeIndx]['source_bc']}>"
 
         String sLPLConc   = tubesMap[sTubeIndx]['lqc_concentration']
         if(sLPLConc == null) {
-            LOG.error "Cannot calculate dilution for tube with barcode <${tubesMap[sTubeIndx]['source_bc']}>"
+            LOG.error "Cannot calculate dilution for tube, lqc_concentration not present"
             return
         }
 
@@ -199,15 +217,14 @@ class LibraryPoolPreNormPostFunctions {
 
         // volumes in µl, concentrations in nM
         double dStartVol      = 40.0
-        double dMinFinalVol   = 40.0
         double dMaxFinalVol   = 200.0
-        double dFinalVol      = 0
+        double dFinalVol
         double dTargetConc    = 10.0
 
-        double dVolToTake     = 0
+        double dVolToTake
         double dVolToBackfill = 0
-        double dVolTotal      = 0
-        double dPPLConc       = 0
+        double dVolTotal
+        double dPPLConc
 
         if(dLPLConc <= dTargetConc) {
             // concentration low, use all the source sample
@@ -256,24 +273,6 @@ class LibraryPoolPreNormPostFunctions {
      * @return
      */
     private static Issue createPPLTubeIssue(Map<String, Map<String, String>> tubesMap, String sTubeIndx) {
-
-//        Customer
-//        Due Date(format)
-//        Plate Format(select) - sbm_plate_format_opt_id
-//        Cells Per Library Pool(select) - sbm_cells_per_library_pool_opt_id
-//        IQC Outcome(select) - iqc_outcome_opt_id
-//        IQC Feedback(select) - iqc_feedback_opt_id
-//        Avg Sample Concentration(number) - qnt_avg_sample_conc
-//        Pooling Block Column(string) - lpo_block_column
-//        Pooling Block Row(string) - lpo_block_row
-//        Pooled from Quadrant(string) - lpo_pooled_from_quadrant
-//        Source LIB Plate(string) - lpo_parent_lib_plt_barcode
-//        Library QC Chip Position(string) - lqc_chip_position
-//        Library QC Concentration(number) - lqc_concentration
-//        Library QC Average Fragment Size(number) - lqc_avg_frag_size
-//        Library QC Percent Total DNA(number) - lqc_percent_total_dna
-//        Library QC Outcome(select) - lqc_outcome_opt_id
-//        Library PNM Concentration(number) - pnm_concentration
 
         LOG.debug "In create PPL tube issue method"
         LOG.debug "sTubeIndx = ${sTubeIndx}"
@@ -334,7 +333,7 @@ class LibraryPoolPreNormPostFunctions {
 
         if (((Map<String, String>) tubesMap[sTubeIndx]).containsKey("lpo_block_column")) {
 
-            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("POOLING_BLOCK_COLUMN"), tubesMap["lpo_block_column"].toString())
+            issParams.addCustomFieldValue(JiraAPIWrapper.getCFIDByAliasName("POOLING_BLOCK_COLUMN"), tubesMap[sTubeIndx]["lpo_block_column"].toString())
         }
 
         if (((Map<String, String>) tubesMap[sTubeIndx]).containsKey("lpo_block_row")) {
@@ -398,45 +397,173 @@ class LibraryPoolPreNormPostFunctions {
     }
 
     //print the labels to the printer selected. Set the parent barcode to the matching LPL tube, and set the number on top
-//of the tube to the position number for user to match to table.
-//*NB. Select information and print labels json to log but do not attempt to print anything yet.
-    public static void printPPLTubeLabelsForPPLIssueIds(Issue PNMIssue, List<String> PPLTubeIds) {
+    //of the tube to the position number for user to match to table.
+    //*NB. Select information and print labels json to log but do not attempt to print anything yet.
+    public static void printPPLTubeLabelsForPPLIssueIds(List<String> PPLIssueIds) {
 
-        ? ? ?
+        LOG.debug "Attempting to print PPL tube labels for issue ids:"
+        LOG.debug PPLIssueIds.toListString()
+
+        List<Map<String, String>> tubeLabelsList = []
+
+        // for each id in PPLIssueIds call
+        PPLIssueIds.each { String PPLTubeId ->
+            Map<String, String> tubeMap = createPPLTubeLabelMap(PPLTubeId)
+            if(tubeMap != null) {
+                tubeLabelsList.push(tubeMap)
+            }
+        }
+
+        // TODO: may need to sort this list by number on PNM issue
+
+        LOG.debug 'PPL tube labels data to be printed:'
+        tubeLabelsList.each{ Map<String,String> labelData ->
+            LOG.debug labelData.toMapString()
+        }
+
+        // TODO: run the print job with the choice of tube printer the user selected and suitable label
+        // see WorkflowUtils.printPlateLabels as example, need to make a Tube version
 
     }
 
-    // get the list of PPL issue ids corresponding to the selected list of LPL tube ids
-    public static List<String> printPPLTubeLabelsCorrespondingToLPLIds(Issue PNMIssue, List<String> LPLTubeIds) {
+    /**
+     * Print the PPL tube labels corresponding to the selected list of LPL tube ids
+     *
+     * @param PNMIssue
+     * @param LPLIssueIds
+     */
+    public static void printPPLTubeLabelsCorrespondingToLPLIds(List<String> LPLIssueIds) {
+
+        LOG.debug "Attempting to print PPL tube labels corresponding to list of LPL tube issue ids:"
+        LOG.debug LPLIssueIds.toListString()
 
         // work out corresponding PPL list
-        List<String> PPLTubeIds
+        List<String> PPLIssueIds = []
 
-        ? ? ?
+        // for each LPL id get issue then get child PPL issue id via Relationships link
+        LPLIssueIds.each { String LPLIssueId ->
+
+            Issue childPPLIssue = getChildPPLTubeOfLPL(LPLIssueId.toLong(), IssueStatusName.TUBPPL_IN_PRE_NORM.toString())
+
+            if(childPPLIssue != null) {
+                PPLIssueIds.push(childPPLIssue.getId().toString())
+            } else {
+                LOG.error "ERROR: Failed to find child PPL tube issue linked to the LPL tube"
+                //TODO: error here, expected to find PPL - what to do?
+            }
+        }
+
+        if(LPLIssueIds.size() != PPLIssueIds.size()) {
+            LOG.error "Size of LPL tube ids list <${LPLIssueIds.size()}> does not match size of derived PPL tube ids list <${PPLIssueIds.size()}>"
+            //TODO: error here, list sizes do not match - what to do?
+            return
+        }
 
         // call print function
-        printPPLTubeLabelsForPPLIssueIds(PNMIssue, PPLTubeIds)
+        printPPLTubeLabelsForPPLIssueIds(PPLIssueIds)
     }
 
-    //    For each selected source LPL tube id:
-//    get source LPL tube issue
-//    get destination PPL tube issue
-//    transition LPL tube via 'Completed pre-normalisation and empty' to 'TubLPL Done Empty'
-//    transition PPL tube via 'Ready for QPCR' to 'TubPPL Rdy for QPCR'
-    public static void processTubesOkEmptyForLibraryPoolPreNormalisation(Issue PNMIssue, List<String> LPLTubeIds) {
+    /**
+     * Transition LPL issues to Done Empty and their corresponding PPL issues to Rdy for QPCR
+     *
+     * @param LPLIssueIds
+     */
+    public static void processTubesOkEmptyForLibraryPoolPreNormalisation(List<String> LPLIssueIds) {
 
-        ? ? ?
+        LOG.debug "Attempting to transition LPL and PPL issues in pre-normalisation where LPLs are empty"
+
+        LPLIssueIds.each { String LPLIssueId ->
+
+            LOG.debug "Processing LPL issue id <${LPLIssueId}>"
+
+            // get source LPL tube issue
+            MutableIssue LPLIssue = WorkflowUtils.getMutableIssueForIssueId(LPLIssueId.toLong())
+
+            // get linked PPL tube issue
+            Issue PPLIssue = getChildPPLTubeOfLPL(LPLIssueId.toLong(), IssueStatusName.TUBPPL_IN_PRE_NORM.toString())
+            if(PPLIssue != null) {
+
+                // transition LPL tube issue via 'Completed pre-normalisation and empty' to 'TubLPL Done Empty'
+                int transitionLPLId = ConfigReader.getTransitionActionId(
+                    WorkflowName.TUBE_LPL.toString(), TransitionName.LPL_COMPLETED_PRE_NORMALISATION_AND_EMPTY.toString()
+                )
+
+                if(transitionLPLId > 0) {
+                    LOG.debug "Attempting to transition LPL to 'TubLPL Done Empty'"
+                    WorkflowUtils.transitionIssue(LPLIssue.getId(), transitionLPLId, "Automatically transitioned during Library Pre-Normalisation Ok Empty")
+                } else {
+                    LOG.error "ERROR: Transition id not found, cannot transition LPL tube with Key <${LPLIssue.getKey()}>"
+                }
+
+                // transition PPL tube issue via 'Ready for QPCR' to 'TubPPL Rdy for QPCR'
+                int transitionPPLId = ConfigReader.getTransitionActionId(
+                    WorkflowName.TUBE_PPL.toString(), TransitionName.PPL_READY_FOR_QPCR.toString()
+                )
+
+                if(transitionPPLId > 0) {
+                    LOG.debug "Attempting to transition PPL to 'Rdy for QPCR'"
+                    WorkflowUtils.transitionIssue(PPLIssue.getId(), transitionPPLId, "Automatically transitioned during Library Pre-Normalisation Ok Empty")
+                } else {
+                    LOG.error "ERROR: Transition id not found, cannot transition PPL tube with Key <${PPLIssue.getKey()}>"
+                }
+
+            } else {
+                LOG.error "ERROR: Failed to find child PPL tube issue linked to the LPL tube with id <${LPLIssueId}>"
+                //TODO: error here, expected to find PPL - what to do?
+            }
+        }
 
     }
 
-//    For each selected source LPL tube id:
-//    get source LPL tube issue
-//    get destination PPL tube issue
-//    transition LPL tube via 'Completed pre-normalisation' to 'TubLPL Done Not Empty'
-//    transition PPL tube via 'Ready for QPCR' to 'TubPPL Rdy for QPCR'
-    public static void processTubesOkNotEmptyForLibraryPoolPreNormalisation(Issue PNMIssue, List<String> LPLTubeIds) {
+    /**
+     * Transition LPL issues to Done Not Empty and their corresponding PPL issues to Rdy for QPCR
+     *
+     * @param LPLIssueIds
+     */
+    public static void processTubesOkNotEmptyForLibraryPoolPreNormalisation(List<String> LPLIssueIds) {
 
-        ? ? ?
+        LOG.debug "Attempting to transition LPL and PPL issues in pre-normalisation where LPLs not empty"
+
+        LPLIssueIds.each { String LPLIssueId ->
+
+            LOG.debug "Processing LPL issue id <${LPLIssueId}>"
+
+            // get source LPL tube issue
+            MutableIssue LPLIssue = WorkflowUtils.getMutableIssueForIssueId(LPLIssueId.toLong())
+
+            // get linked PPL tube issue
+            Issue PPLIssue = getChildPPLTubeOfLPL(LPLIssueId.toLong(), IssueStatusName.TUBPPL_IN_PRE_NORM.toString())
+            if(PPLIssue != null) {
+
+                // transition LPL tube issue via 'Completed pre-normalisation' to 'TubLPL Done Not Empty'
+                int transitionLPLId = ConfigReader.getTransitionActionId(
+                        WorkflowName.TUBE_LPL.toString(), TransitionName.LPL_COMPLETED_PRE_NORMALISATION.toString()
+                )
+
+                if(transitionLPLId > 0) {
+                    LOG.debug "Attempting to transition LPL to 'TubLPL Done Empty'"
+                    WorkflowUtils.transitionIssue(LPLIssue.getId(), transitionLPLId, "Automatically transitioned during Library Pre-Normalisation Ok NOT Empty")
+                } else {
+                    LOG.error "ERROR: Transition id not found, cannot transition LPL tube with Key <${LPLIssue.getKey()}>"
+                }
+
+                // transition PPL tube issue via 'Ready for QPCR' to 'TubPPL Rdy for QPCR'
+                int transitionPPLId = ConfigReader.getTransitionActionId(
+                        WorkflowName.TUBE_PPL.toString(), TransitionName.PPL_READY_FOR_QPCR.toString()
+                )
+
+                if(transitionPPLId > 0) {
+                    LOG.debug "Attempting to transition PPL to 'Rdy for QPCR'"
+                    WorkflowUtils.transitionIssue(PPLIssue.getId(), transitionPPLId, "Automatically transitioned during Library Pre-Normalisation Ok NOT Empty")
+                } else {
+                    LOG.error "ERROR: Transition id not found, cannot transition PPL tube with Key <${PPLIssue.getKey()}>"
+                }
+
+            } else {
+                LOG.error "ERROR: Failed to find child PPL tube issue linked to the LPL tube with id <${LPLIssueId}>"
+                //TODO: error here, expected to find PPL - what to do?
+            }
+        }
 
     }
 
@@ -446,9 +573,50 @@ class LibraryPoolPreNormPostFunctions {
 //    transition source LPL tube via 'Fail in pre-normalisation' to 'TubLPL Failed'
 //    transition destination PPL tube via 'Fail in pre-normalisation' to 'TubPPL Failed'
 //    TODO: may need some group checking of tubes here, to decide if need to re-run from LIB plate or ECH plate
-    public static void processTubesFailedForLibraryPoolPreNormalisation(Issue PNMIssue, List<String> LPLTubeIds) {
+    public static void processTubesFailedForLibraryPoolPreNormalisation(List<String> LPLIssueIds) {
 
-        ? ? ?
+        LOG.debug "Attempting to transition LPL and PPL issues failed in pre-normalisation"
+
+        LPLIssueIds.each { String LPLIssueId ->
+
+            LOG.debug "Processing LPL issue id <${LPLIssueId}>"
+
+            // get source LPL tube issue
+            MutableIssue LPLIssue = WorkflowUtils.getMutableIssueForIssueId(LPLIssueId.toLong())
+
+            // get linked PPL tube issue
+            Issue PPLIssue = getChildPPLTubeOfLPL(LPLIssueId.toLong(), IssueStatusName.TUBPPL_IN_PRE_NORM.toString())
+            if(PPLIssue != null) {
+
+                // transition LPL tube issue via 'Fail in pre-normalisation' to 'TubLPL Failed'
+                int transitionLPLId = ConfigReader.getTransitionActionId(
+                        WorkflowName.TUBE_LPL.toString(), TransitionName.LPL_FAIL_IN_PRE_NORMALISATION.toString()
+                )
+
+                if(transitionLPLId > 0) {
+                    LOG.debug "Attempting to transition LPL to 'TubLPL Done Empty'"
+                    WorkflowUtils.transitionIssue(LPLIssue.getId(), transitionLPLId, "Automatically transitioned during Library Pre-Normalisation Failed tubes")
+                } else {
+                    LOG.error "ERROR: Transition id not found, cannot transition LPL tube with Key <${LPLIssue.getKey()}>"
+                }
+
+                // transition PPL tube issue via 'Fail in pre-normalisation' to 'TubPPL Failed'
+                int transitionPPLId = ConfigReader.getTransitionActionId(
+                        WorkflowName.TUBE_PPL.toString(), TransitionName.PPL_FAIL_IN_PRE_NORMALISATION.toString()
+                )
+
+                if(transitionPPLId > 0) {
+                    LOG.debug "Attempting to transition PPL to 'Rdy for QPCR'"
+                    WorkflowUtils.transitionIssue(PPLIssue.getId(), transitionPPLId, "Automatically transitioned during Library Pre-Normalisation Failed tubes")
+                } else {
+                    LOG.error "ERROR: Transition id not found, cannot transition PPL tube with Key <${PPLIssue.getKey()}>"
+                }
+
+            } else {
+                LOG.error "ERROR: Failed to find child PPL tube issue linked to the LPL tube with id <${LPLIssueId}>"
+                //TODO: error here, expected to find PPL - what to do?
+            }
+        }
 
     }
 
@@ -463,54 +631,74 @@ class LibraryPoolPreNormPostFunctions {
         LOG.debug "Creating wiki markup for tubes map:"
         LOG.debug tubesMap.toMapString()
 
-        ? ? ?
+        // line 1 = table headers for 7 columns of 1 to 10 pre-normalisation tubes
+        def wikiSB = '{html}<div style="text-align: center;">{html}'<<''
+        wikiSB <<= System.getProperty("line.separator")
+        wikiSB <<= '|| '
+        wikiSB <<= '|| Source LPL ' + '\\\\ ' + 'Barcode '
+        wikiSB <<= '|| Destination PPL ' + '\\\\ ' + 'Barcode '
+        wikiSB <<= '|| LPL Conc ' + '\\\\ ' + '(nM) '
+        wikiSB <<= '|| Volume to ' + '\\\\ ' + 'take (&mu;l) '
+        wikiSB <<= '|| Volume to ' + '\\\\ ' + 'backfill (&mu;l) '
+        wikiSB <<= '|| Total Volume ' + '\\\\ ' + '(&mu;l) '
+        wikiSB <<= '|| PPL Conc ' + '\\\\ ' + '(nM) '
+        wikiSB <<= '||'
+        wikiSB <<= System.getProperty("line.separator")
 
-//        // line 1 = table headers for 8 columns of 1 to 11 tube results
-//        def wikiSB = '{html}<div style="text-align: center;">{html}'<<''
-//        wikiSB <<= System.getProperty("line.separator")
-//        wikiSB <<= '|| '
-//        wikiSB <<= '|| Barcode '
-//        wikiSB <<= '|| Conc ' + '\\\\ ' + '(nM)'
-//        wikiSB <<= '|| Avg ' + '\\\\ ' + 'Fragment ' + '\\\\ ' + 'Size (bp)'
-//        wikiSB <<= '|| % Total ' + '\\\\ ' + 'DNA'
-//        wikiSB <<= '|| SBM Plt ' + '\\\\ ' + 'Format'
-//        wikiSB <<= '|| IQC ' + '\\\\ ' + 'Outcome'
-//        wikiSB <<= '|| IQC ' + '\\\\ ' + 'Feedback'
-//        wikiSB <<= '|| QNT Avg' + '\\\\' + 'Sample ' + '\\\\ ' + 'Conc (ng/&mu;l)'
-//        wikiSB <<= '||'
-//        wikiSB <<= System.getProperty("line.separator")
-//
-//        // lines 2-12 tube rows
-//        (1..11).each { int iRow ->
-//            String sRow = Integer.toString(iRow)
-//            if(dilutionsMap.containsKey(sRow)) {
-//                wikiSB <<= '|| ' + sRow
-//                String sTubeBC = dilutionsMap[sRow]['barcode']
-//                String[] sSplitTubeBC = sTubeBC.split('\\.')
-//                LOG.debug "sSplitTubeBC = ${sSplitTubeBC.toString()}"
-//                if(3 == sSplitTubeBC.size()) {
-//                    wikiSB <<= '| ' + sSplitTubeBC[0] + '.' + sSplitTubeBC[1] + '. \\\\ *' + sSplitTubeBC[02] + '*'
-//                } else {
-//                    LOG.warn "splitTubeBC unexpected size <${sSplitTubeBC.size()}>"
-//                    wikiSB <<= '| ' + sTubeBC
-//                }
-//                wikiSB <<= '| ' + dilutionsMap[sRow]['concentration']
-//                wikiSB <<= '| ' + dilutionsMap[sRow]['fragmentsize']
-//                wikiSB <<= '| ' + dilutionsMap[sRow]['percent_total']
-//                wikiSB <<= '| ' + dilutionsMap[sRow]['sbm_plate_format']
-//                wikiSB <<= '| ' + dilutionsMap[sRow]['iqc_outcome']
-//                wikiSB <<= '| ' + dilutionsMap[sRow]['iqc_feedback']
-//                wikiSB <<= '| ' + dilutionsMap[sRow]['qnt_avg_conc']
-//
-//            } else {
-//                wikiSB <<= '|| ' + sRow
-//                wikiSB <<= '| | | | | | | | '
-//            }
-//            wikiSB <<= '|'
-//            wikiSB <<= System.getProperty("line.separator")
-//        }
-//        wikiSB <<= '{html}</div>{html}'
-//        wikiSB
+        // lines 2-11 tube rows
+        (1..10).each { int iTubeIndx ->
+            String sTubeIndx = Integer.toString(iTubeIndx)
+            if(tubesMap.containsKey(sTubeIndx)) {
+                // row number
+                wikiSB <<= '|| ' + sTubeIndx
+
+                // source LPL barcode
+                String sSrcTubeBC = tubesMap[sTubeIndx]['source_bc']
+                String[] sSplitSrcTubeBC = sSrcTubeBC.split('\\.')
+                LOG.debug "sSplitSrcTubeBC = ${sSplitSrcTubeBC.toString()}"
+                if (3 == sSplitSrcTubeBC.size()) {
+                    wikiSB <<= '| ' + sSplitSrcTubeBC[0] + '.' + sSplitSrcTubeBC[1] + '. \\\\ *' + sSplitSrcTubeBC[02] + '*'
+                } else {
+                    LOG.warn "splitSrcTubeBC unexpected size <${sSplitSrcTubeBC.size()}>"
+                    wikiSB <<= '| ' + sSrcTubeBC
+                }
+
+                // destination PPL barcode
+                String sDstTubeBC = tubesMap[sTubeIndx]['dest_bc']
+                String[] sSplitDstTubeBC = sDstTubeBC.split('\\.')
+                LOG.debug "sSplitDstTubeBC = ${sSplitDstTubeBC.toString()}"
+                if (3 == sSplitDstTubeBC.size()) {
+                    wikiSB <<= '| ' + sSplitDstTubeBC[0] + '.' + sSplitDstTubeBC[1] + '. \\\\ *' + sSplitDstTubeBC[02] + '*'
+                } else {
+                    LOG.warn "splitSrcTubeBC unexpected size <${sSplitDstTubeBC.size()}>"
+                    wikiSB <<= '| ' + sDstTubeBC
+                }
+
+                // LPL concentration (nM)
+                wikiSB <<= '| ' + tubesMap[sTubeIndx]['lqc_concentration']
+
+                // Volume to take (µl)
+                wikiSB <<= '| *' + tubesMap[sTubeIndx]['pnm_vol_to_take'] + '*'
+
+                // Volume to backfill (µl)
+                if(tubesMap[sTubeIndx]['pnm_vol_to_backfill'] == "0.0") {
+                    wikiSB <<= '| ' + tubesMap[sTubeIndx]['pnm_vol_to_backfill']
+                } else {
+                    wikiSB <<= '| *' + tubesMap[sTubeIndx]['pnm_vol_to_backfill'] + '*'
+                }
+
+                // Total volume (µl)
+                wikiSB <<= '| ' + tubesMap[sTubeIndx]['pnm_vol_total']
+
+                // PPL concentration (nM)
+                wikiSB <<= '| ' + tubesMap[sTubeIndx]['pnm_concentration']
+
+                wikiSB <<= '|'
+                wikiSB <<= System.getProperty("line.separator")
+            }
+        }
+        wikiSB <<= '{html}</div>{html}'
+        wikiSB
 
     }
 
@@ -624,6 +812,124 @@ class LibraryPoolPreNormPostFunctions {
         }
 
         barcodesList
+    }
+
+    /**
+     * Creates the PPL tube label data for a PPL tube issue id
+     *
+     * @param LIBIssuesMap
+     * @return
+     */
+    private static Map<String, String> createPPLTubeLabelMap(String PPLIssueId) {
+
+        // create a label data map
+        Map<String, String> tubeLabelMap = [:]
+
+        MutableIssue PPLIssue = WorkflowUtils.getMutableIssueForIssueId(PPLIssueId.toLong())
+
+        String sBarcode = JiraAPIWrapper.getCFValueByName(PPLIssue, ConfigReader.getCFName("BARCODE"))
+        LOG.debug "Barcode = ${sBarcode}"
+        tubeLabelMap['barcode'] = sBarcode
+
+        String sPosition = JiraAPIWrapper.getCFValueByName(PPLIssue, ConfigReader.getCFName("LIBRARY_PNM_SOURCE_NUMBER"))
+        LOG.debug "Position in PNM = ${sPosition}"
+        tubeLabelMap['position'] = sPosition
+
+        // TODO: what other fields do we need on the PPL label?
+
+        // get the parent LPL container
+        List<Issue> parentContainersOfPPL = WorkflowUtils.getParentContainersForContainerId(PPLIssue.getId())
+
+        if(parentContainersOfPPL.size() <= 0) {
+            LOG.error "Expected to find parent LPL tube issue linked to the PPL tube but nothing found, cannot continue"
+            return null
+        }
+
+        LOG.debug "Found <${parentContainersOfPPL.size()}> parents for the PPL tube, assuming 1"
+
+        Issue parentLPLIssue = parentContainersOfPPL.get(0)
+
+        if (parentLPLIssue.getIssueType().getName() == IssueTypeName.TUBE_LPL.toString()) {
+
+            LOG.debug "Parent LPL tube of the PPL tube:"
+            LOG.debug "Issue type = ${parentLPLIssue.getIssueType().getName()}"
+            String parentLPLStatus = parentLPLIssue.getStatus().getName()
+            LOG.debug "Status = ${parentLPLStatus}"
+            LOG.debug "Id = ${parentLPLIssue.getId().toString()}"
+            LOG.debug "Key = ${parentLPLIssue.getKey()}"
+
+            String sLPLTubeBarcode = JiraAPIWrapper.getCFValueByName(parentLPLIssue, ConfigReader.getCFName("BARCODE"))
+            LOG.debug "LPL Barcode = ${sLPLTubeBarcode}"
+
+            tubeLabelMap['parent_barcode'] = sLPLTubeBarcode
+            String[] splitLPLBC = sBarcode.split('\\.')
+            if (3 == splitLPLBC.size()) {
+                tubeLabelMap['barcode_info'] = splitLPLBC[1]
+                tubeLabelMap['barcode_number'] = splitLPLBC[2]
+            } else {
+                tubeLabelMap['barcode_info'] = BarcodeInfos.INFO_LPL.toString()
+                tubeLabelMap['barcode_number'] = 'unknown'
+            }
+
+        } else {
+            LOG.error "Expected to find parent LPL tube issue linked to the PPL tube but found issue with wrong issue type <${parentLPLIssue.getIssueType().getName()}>, cannot continue"
+            return null
+        }
+
+        tubeLabelMap
+    }
+
+    /**
+     * Get the child PPL tube issue from the LPL tube issue in the specified state
+     *
+     * @param LPLIssueId
+     * @param PPLIssueStateName
+     * @return
+     */
+    private static Issue getChildPPLTubeOfLPL(Long LPLIssueId, String PPLIssueStateName) {
+
+        LOG.debug "Attempting to fetch the child PPL tube in state <${PPLIssueStateName}> of the LPL tube with Id <${LPLIssueId}>"
+        List<Issue> childCntrsOfLPL = WorkflowUtils.getChildContainersForContainerId(LPLIssueId)
+
+        if (childCntrsOfLPL.size() <= 0) {
+            LOG.error "Expected to find child PPL tube issues linked to the LPL tube but none found for LPL tube id <${LPLIssueId}>"
+            return null
+        } else {
+            LOG.debug "Found <${childCntrsOfLPL.size()}> child container issues for the LPL tube, look for first in correct state"
+
+            Issue PPLIssue
+
+            childCntrsOfLPL.find{ Issue childIssue ->
+
+                LOG.debug "Issue type = ${childIssue.getIssueType().getName()}"
+                String childIssueStatus = childIssue.getStatus().getName()
+                LOG.debug "Status = ${childIssueStatus}"
+                LOG.debug "Id = ${childIssue.getId().toString()}"
+                LOG.debug "Key = ${childIssue.getKey()}"
+
+                // check the issue is a PPL tube and in expected state
+                if (childIssue.getIssueType().getName() == IssueTypeName.TUBE_PPL.toString()) {
+                    if(childIssue.getStatus().getName() == PPLIssueStateName) {
+                        LOG.debug "Found valid child PPL of the LPL tube"
+                        PPLIssue = childIssue
+                        return true
+                    } else {
+                        LOG.debug "Found child PPL of the LPL tube in incorrect state"
+                    }
+                } else {
+                    LOG.debug "Found child of the LPL tube of incorrect type"
+                }
+                return false
+
+            }
+
+            if(PPLIssue != null) {
+                return PPLIssue
+            } else {
+                LOG.error "Expected to find child PPL tube issues with state <${PPLIssueStateName}> to the LPL tube but none found for LPL tube id <${LPLIssueId}>"
+                return null
+            }
+        }
     }
 
 }

@@ -8,6 +8,8 @@ package uk.ac.sanger.scgcf.jira.lims.enums
 enum IssueStatusName {
 
     SS2_IN_PROGRESS("SS2 In Progress"),
+    IQC_DONE("IQC Done"),
+    QNTA_DONE("QNTA Done"),
     PLTSS2_IN_SS2("PltSS2 In SS2"),
     PLTSS2_IN_SUBMISSION("PltSS2 In Submission"),
     PLTSS2_IN_FEEDBACK("PltSS2 In Feedback"),
@@ -19,8 +21,7 @@ enum IssueStatusName {
     PLTDNA_DONE_NOT_EMPTY("PltDNA Done Not Empty"),
     PLTECH_IN_SPRI("PltECH In SPRi"),
     TUBLPL_IN_POOLING("TubLPL In Pooling"),
-    IQC_DONE("IQC Done"),
-    QNTA_DONE("QNTA Done")
+    TUBPPL_IN_PRE_NORM("TubPPL in Pre-norm")
 
     String issueStatusName
 

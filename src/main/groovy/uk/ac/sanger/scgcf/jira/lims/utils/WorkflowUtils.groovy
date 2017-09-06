@@ -1102,8 +1102,8 @@ class WorkflowUtils {
     public static String getLQCOutcomeOptionId(Issue curIssue) {
 
         String sLQCOutcomeOptId
-        String sLQCOutcome = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("LQC_OUTCOME"))
-        LOG.debug "LQC Outcome = ${sLQCOutcome}"
+        String sLQCOutcome = JiraAPIWrapper.getCFValueByName(curIssue, ConfigReader.getCFName("LIBRARY_QC_OUTCOME"))
+        LOG.debug "Library QC Outcome = ${sLQCOutcome}"
         if(sLQCOutcome == 'Pass') {
             sLQCOutcomeOptId = SelectOptionId.LQC_OUTCOME_PASS.toString()
         } else if(sLQCOutcome == 'Fail') {

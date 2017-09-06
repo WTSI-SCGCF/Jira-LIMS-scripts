@@ -28,5 +28,5 @@ ArrayList<String> LPLTubeIds = WorkflowUtils.getIssueIdsFromNFeedField(curIssue,
 
 // print the tube labels
 if(LPLTubeIds != null) {
-    LibraryPoolPreNormPostFunctions.printPPLTubeLabelsCorrespondingToLPLIds(curIssue, LPLTubeIds)
+    LibraryPoolPreNormPostFunctions.printPPLTubeLabelsCorrespondingToLPLIds(LPLTubeIds)
 }
