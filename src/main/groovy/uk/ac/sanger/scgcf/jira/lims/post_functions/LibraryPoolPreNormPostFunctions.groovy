@@ -216,6 +216,7 @@ class LibraryPoolPreNormPostFunctions {
         double dLPLConc       = Double.parseDouble(sLPLConc)
 
         // volumes in µl, concentrations in nM
+        // TODO: fetch these dilution calculation values from a config file
         double dStartVol      = 40.0
         double dMaxFinalVol   = 200.0
         double dFinalVol
