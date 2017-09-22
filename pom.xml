@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>jira_lims_scripts</groupId>
     <artifactId>jira_lims_scripts</artifactId>
-    <version>1.24.0</version>
+    <version>1.25.0</version>
 
     <!-- To output to plugin format use atlassian-plugin packaging -->
     <packaging>atlassian-plugin</packaging>
@@ -70,11 +70,19 @@
             <version>3.2.4</version>
         </dependency>
 
-        <!--For the Materials/Container services-->
+        <!-- For the Materials/Container services -->
         <dependency>
             <groupId>com.github.sanger</groupId>
             <artifactId>jira_integration_scripts</artifactId>
             <version>0.1.5</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- For parsing Excel 2007 format and later -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>3.8</version>
             <scope>compile</scope>
         </dependency>
 

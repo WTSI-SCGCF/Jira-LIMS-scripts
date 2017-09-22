@@ -440,7 +440,7 @@ class WorkflowUtils {
     }
 
     /**
-     * Get a mutable issue for an issue id
+     * Get the mutable issue for an issue id
      *
      * @param issueId
      * @return mutable version of the issue

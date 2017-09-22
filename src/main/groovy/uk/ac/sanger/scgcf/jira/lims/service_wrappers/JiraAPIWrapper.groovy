@@ -211,7 +211,7 @@ class JiraAPIWrapper {
      */
     static void setCFSelectValueByName(Issue curIssue, String cfName, String sOptionName) {
 
-        LOG.debug "Attempting to set customfield value by name"
+        LOG.debug "Attempting to set select type customfield value by option name"
         LOG.debug "Issue Id: ${curIssue.getId()}"
         LOG.debug "Custom field name: ${cfName}"
         LOG.debug "Option name: ${sOptionName}"

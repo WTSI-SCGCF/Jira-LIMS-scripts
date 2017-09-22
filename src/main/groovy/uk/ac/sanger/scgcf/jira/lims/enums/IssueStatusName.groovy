@@ -21,7 +21,8 @@ enum IssueStatusName {
     PLTDNA_DONE_NOT_EMPTY("PltDNA Done Not Empty"),
     PLTECH_IN_SPRI("PltECH In SPRi"),
     TUBLPL_IN_POOLING("TubLPL In Pooling"),
-    TUBPPL_IN_PRE_NORM("TubPPL in Pre-norm")
+    TUBPPL_IN_PRE_NORM("TubPPL in Pre-norm"),
+    TUBPPL_RDY_FOR_QPCR("TubPPL Rdy for QPCR")
 
     String issueStatusName
 
